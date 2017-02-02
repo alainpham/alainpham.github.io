@@ -29,12 +29,9 @@
 		</div>
 	</nav>
 	
-			{% capture headphoto %}{% file_exists /assets/images/{{page.id}}/top.jpg %}{% endcapture %}
-		{% if  headphoto == "true" %}
 		<img
 			alt="{{ page.title }}"
 			src="/assets/images/{{page.id}}/top.jpg" class="img-responsive">
-		{% endif %}
 		
 	
 	<div class="jumbotron  clearfix">
