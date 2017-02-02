@@ -1,0 +1,47 @@
+<div>
+	<nav class="navbar navbar-default navbar-fixed-top">
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<button class="navbar-toggle collapsed" type="button"
+					data-toggle="collapse" data-target="#navbar-collapse-menu">
+					<span class="sr-only">Toggle navigation</span> <span
+						class="icon-bar"></span> <span class="icon-bar"></span> <span
+						class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="/"> <i class="fa fa-barcode"></i>
+				</a>
+			</div>
+			<div id="navbar-collapse-menu" class="collapse navbar-collapse">
+				<ul class="nav navbar-nav">
+					<li class="dropdown"><a class="dropdown-toggle"
+						data-toggle="dropdown" href="#">Featured Projects<span
+							class="caret"></span></a>
+						<ul class="dropdown-menu">
+							<li><a href="/projects/microbam">MicroBam</a></li>
+							<li><a href="/projects/ourlegacy">OurLegacy</a></li>
+						</ul></li>
+					<li><a href="/">Posts</a></li>
+<!-- 					<li><a href="/">Presentations</a></li>
+					<li><a href="/">Tags</a></li> -->
+					<li><a href="/about/">About</a></li>
+				</ul>
+			</div>
+		</div>
+	</nav>
+	
+			{% capture headphoto %}{% file_exists /assets/images/{{page.id}}/top.jpg %}{% endcapture %}
+		{% if  headphoto == "true" %}
+		<img
+			alt="{{ page.title }}"
+			src="/assets/images/{{page.id}}/top.jpg" class="img-responsive">
+		{% endif %}
+		
+	
+	<div class="jumbotron  clearfix">
+
+		<h1 class="text-center">{{ page.title }}</h1>
+
+
+		
+	</div>
+</div>

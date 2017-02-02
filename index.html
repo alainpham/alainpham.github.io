@@ -1,0 +1,17 @@
+---
+layout: default
+title: Alain's Blog
+---
+
+<h1>Recent posts</h1>
+
+
+<div class="list-group">
+  {% for post in site.posts %}
+  <a href="{{ post.url }}" class="list-group-item">
+    <h4 class="list-group-item-heading">{{ post.title }}</h4>
+    <p class="list-group-item-text">{{ post.excerpt | strip_html}}</p>
+  </a>
+  {% endfor %}
+</div>
+

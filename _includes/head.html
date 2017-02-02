@@ -1,0 +1,22 @@
+<head>
+   <meta charset="utf-8"></meta> 
+  {% if page.title %}
+    <title>{{page.title}} | {{ page.description }}</title>
+  {% else %}
+    <title>{{ site.name }} - {{ site.description }}</title>
+  {% endif %}
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" ></meta>
+  
+  {% if page.title %}
+  <meta property="og:title" content="{{ page.title }}" ></meta>
+  <meta property="twitter:title" content="{{ page.title }}" ></meta>
+  {% endif %}
+  
+  <link rel="stylesheet" href="/assets/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/assets/css/font-awesome/css/font-awesome.min.css" />
+  <link rel="stylesheet" href="/assets/css/main.css" />
+  
+  <script src="/assets/js/jquery.min.js"></script>
+  <script src="/assets/js/bootstrap.min.js"></script>
+  
+</head>

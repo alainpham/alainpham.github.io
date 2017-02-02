@@ -1,0 +1,221 @@
+---
+layout: default
+title:  "Quickstart Json RESTful microservice with Spring-Boot"
+date:   2017-02-02 09:00:00 +0200
+categories: spring-boot quickstart rest json microservice
+---
+
+<p>In this post you will learn how to create a RESTful microservice
+	from scratch using Spring-Boot using Eclipse & Maven.</p>
+<!--more-->
+
+<p>Spring boot is one of the very popular frameworks to build
+	microservices. In fact it has been chosen to be the standard for JBoss
+	Fuse (Fuse Integration Services 2.0) deployments on Openshift. It can
+	also be used for general java application purposes. You would be
+	surprised how easy it is to create standalone packages that are capable
+	of running production grade services.</p>
+
+<p>These are the steps of this tutorial</p>
+
+<ul>
+ 	<li>Create a new simple Maven project in Eclipse</li>
+ 	<li>Add dependencies to Spring Boot</li>
+ 	<li>Launch your service</li>
+</ul>
+
+<h1>Prerequisites</h1>
+
+<p>As a prerequisite for this tutorial you will need the following
+	elements:</p>
+
+<ul>
+ 	<li>Java JDK</li>
+ 	<li>Eclipse with maven plugin</li>
+ 	<li>Maven</li>
+</ul>
+
+
+
+<h1>Create a simple maven project</h1>
+
+<p>First you must create a simple maven project. For that you can use the Eclipse Wizard</p>
+
+<a href="/assets/images/{{page.id}}/create-new-maven-project.png"> <img
+	class="center-block img-responsive"
+	src="/assets/images/{{page.id}}/create-new-maven-project.png" /></a>
+
+<p>Chose simple project to have an empty pom.xml file</p>
+
+<a href="/assets/images/{{page.id}}/choose-simple-project.png"> <img
+	class="center-block img-responsive"
+	src="/assets/images/{{page.id}}/choose-simple-project.png" /></a>
+
+<p>Fill in the project details</p>
+
+<a href="/assets/images/{{page.id}}/fill-project-infos.png"> <img
+	class="center-block img-responsive"
+	src="/assets/images/{{page.id}}/fill-project-infos.png" /></a>
+
+<h1>Edit the pom.xml file</h1>
+
+<p>Add these parent, dependencies, and plugin blocs to your pom</p>
+
+<pre>
+&lt;project xmlns=&quot;http://maven.apache.org/POM/4.0.0&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+	xsi:schemaLocation=&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&quot;&gt;
+	&lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+	&lt;groupId&gt;com.test&lt;/groupId&gt;
+	&lt;artifactId&gt;rest-service&lt;/artifactId&gt;
+	&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+
+	&lt;parent&gt;
+		&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+		&lt;artifactId&gt;spring-boot-starter-parent&lt;/artifactId&gt;
+		&lt;version&gt;1.5.1.RELEASE&lt;/version&gt;
+	&lt;/parent&gt;
+
+	&lt;dependencies&gt;
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+		&lt;/dependency&gt;
+
+		&lt;dependency&gt;
+			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+			&lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
+			&lt;scope&gt;test&lt;/scope&gt;
+		&lt;/dependency&gt;
+	&lt;/dependencies&gt;
+
+	&lt;build&gt;
+		&lt;plugins&gt;
+			&lt;plugin&gt;
+				&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+				&lt;artifactId&gt;spring-boot-maven-plugin&lt;/artifactId&gt;
+			&lt;/plugin&gt;
+		&lt;/plugins&gt;
+	&lt;/build&gt;
+
+&lt;/project&gt;
+</pre>
+
+
+<h1>Create Application class</h1>
+
+<pre>
+package com.app;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+
+
+
+@SpringBootApplication
+public class Application {
+
+	public static void main(String[] args) {
+		SpringApplication.run(Application.class, args);
+	}
+
+}
+</pre>
+
+<h1>Create a business model</h1>
+<pre>
+package com.app.model;
+
+public class Person {
+
+	private Long id;
+	private String name;
+	
+	
+	public Long getId() {
+		return id;
+	}
+	public void setId(Long id) {
+		this.id = id;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	
+	
+}
+</pre>
+
+<h1>Create a service</h1>
+<pre>
+package com.app.service;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.web.bind.annotation.*;
+
+import com.app.model.Person;
+
+@RestController
+@RequestMapping(value="/svc/person")
+public class PersonService {
+
+	Map<Long, Person> personMap;
+	
+	public PersonService() {
+		super();
+		personMap = new HashMap< Long, Person>();
+		
+		
+		Person p1 = new Person();
+		p1.setId(1l);
+		p1.setName("John Doe");
+		
+		
+		Person p2 = new Person();
+		p2.setId(2l);
+		p2.setName("Jane Smith");
+		
+		personMap.put(p1.getId(), p1);
+		personMap.put(p2.getId(), p2);
+	}
+
+
+	@RequestMapping(value="/{id}",method = RequestMethod.GET)
+	public Person getPerson(@PathVariable Long id){
+		return personMap.get(id);
+	}
+}
+</pre>
+
+<h1>Run your application</h1>
+
+<p>Open a command prompt in the root folder of your project and run : </p>
+<pre>mvn spring-boot:run</pre>
+
+<p>You can now also build your package and run the flat jar file</p>
+<pre>
+mvn package
+java -jar target/rest-service-0.0.1-SNAPSHOT.jar
+</pre>
+
+<p>Now open your browser and consume your microservice by entering the following url</p>
+<pre>
+http://localhost:8080/svc/person/1
+</pre>
+
+<a href="/assets/images/{{page.id}}/consume.png"> <img
+	class="center-block img-responsive"
+	src="/assets/images/{{page.id}}/consume.png" /></a>
+
+
+<p>Thanks for reading !</p>
+
+<p>Originally published {{ page.date | date: '%B %d, %Y' }}</p>
+
