@@ -1,6 +1,7 @@
 ---
 layout: default
 title: Alain's Blog
+comments: true
 ---
 
 <h1>Recent posts</h1>
@@ -10,7 +11,8 @@ title: Alain's Blog
   {% for post in site.posts %}
   <a href="{{ post.url }}" class="list-group-item">
     <h4 class="list-group-item-heading">{{ post.title }}</h4>
-    <p class="list-group-item-text">{{ post.excerpt | strip_html}}</p>
+    <h5 class="list-group-item-heading"> {{ post.date | date: '%B %d, %Y' }} </h5>
+    <p >{{ post.excerpt | strip_html}}</p>
   </a>
   {% endfor %}
 </div>
