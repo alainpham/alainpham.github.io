@@ -5,8 +5,13 @@
   <!-- SEO stuff -->
   <title>{{page.title}}</title>
   <meta property="og:title" content="{{page.title}}" />
-  <meta name="description" content="{{page.description}}" />
-  <meta property="og:description" content="{{page.description}}" />
+  {% if page.description}
+	  <meta name="description" content="{{page.description}}" />
+	  <meta property="og:description" content="{{page.description}}" />
+  {% else %}
+	  <meta name="description" content="{{page.excerpt}}" />
+	  <meta property="og:description" content="{{page.excerpt}}" />
+  {% endif %}
   <link rel="canonical" href="{{site.url}}{{page.url}}" />
   <meta property="og:url" content="{{site.url}}{{page.url}}" />
   <meta property="og:site_name" content="{{site.name}}" />
