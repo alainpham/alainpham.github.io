@@ -5,9 +5,10 @@
 	{% include header.html %}
 	<div class="container">
 	{{ content }}
-	
+	{% if page.id %}
 	<p>Originally published {{ page.published | date: '%B %d, %Y' }}
     <br> Latest update {{ page.date | date: '%B %d, %Y' }}</p>
+	{% endif %}
 	
 	{% include disqus.html %}
 	</div>
