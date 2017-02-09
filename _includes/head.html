@@ -9,8 +9,8 @@
 	  <meta name="description" content="{{page.description}}" />
 	  <meta property="og:description" content="{{page.description}}" />
   {% else %}
-	  <meta name="description" content="{{page.excerpt}}" />
-	  <meta property="og:description" content="{{page.excerpt}}" />
+	  <meta name="description" content="{{page.excerpt | strip_html}}" />
+	  <meta property="og:description" content="{{page.excerpt | strip_html}}" />
   {% endif %}
   <link rel="canonical" href="{{site.url}}{{page.url}}" />
   <meta property="og:url" content="{{site.url}}{{page.url}}" />
