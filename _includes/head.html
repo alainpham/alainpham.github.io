@@ -3,20 +3,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" ></meta>
   <link rel="shortcut icon" type="image/png" href="/icon.png" />
   
+  <meta name="twitter:card" content="summary">
+	  
+  
   <!-- SEO stuff -->
   <title>{{page.title}}</title>
   <meta property="og:title" content="{{page.title}}" />
+  <meta name="twitter:title" content="{{page.title}}">
+  
+
   {% if page.description %}
 	  <meta name="description" content="{{page.description}}" />
 	  <meta property="og:description" content="{{page.description}}" />
+	  <meta name="twitter:description" content="{{page.description}}">
+	  
   {% else %}
 	  <meta name="description" content="{{page.excerpt | strip_html}}" />
 	  <meta property="og:description" content="{{page.excerpt | strip_html}}" />
+	  <meta name="twitter:description" content="{{page.description}}">
   {% endif %}
   <link rel="canonical" href="{{site.url}}{{page.url}}" />
   <meta property="og:url" content="{{site.url}}{{page.url}}" />
+  <meta name="twitter:url" content="{{site.url}}{{page.url}}">
+  
   <meta property="og:site_name" content="{{site.name}}" />
   <meta property="og:image" content="{{site.url}}/assets/images/{{page.id}}/top.jpg" />
+  <meta name="twitter:image" content="{{site.url}}/assets/images/{{page.id}}/top.jpg">
   
   {% if page.id %} <!-- if it's an article -->
   <meta property="og:type" content="article" />
