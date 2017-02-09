@@ -13,8 +13,8 @@
 # you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
-title: Alain's Blog
-name: Alain's Blog
+title: Alain's Tech Blog
+name: Alain's Tech Blog
 description: 
   This is a blog of someone passionate about technology who wants to share some of the things he knows
   about Application Development, Integration, Cloud, Big Data and Digital Transformation
@@ -27,9 +27,12 @@ markdown: kramdown
 #theme: minima
 gems:
   - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
 exclude:
   - Gemfile
   - Gemfile.lock
 include: ["_pages"]
 permalink: /posts/:title/
 excerpt_separator: <!--more-->
+author: https://www.linkedin.com/in/alainpham

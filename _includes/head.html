@@ -1,17 +1,56 @@
 <head>
-   <meta charset="utf-8"></meta> 
-  {% if page.title %}
-    <title>{{page.title}} | {{ page.description }}</title>
-  {% else %}
-    <title>{{ site.name }} - {{ site.description }}</title>
-  {% endif %}
+  <meta charset="utf-8"></meta> 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" ></meta>
+
+  <!-- SEO stuff -->
+  <title>{{page.title}}</title>
+  <meta property="og:title" content="{{page.title}}" />
+  <meta name="description" content="{{page.description}}" />
+  <meta property="og:description" content="In this post you will learn how to create a RESTful microservice from scratch using Spring-Boot, Eclipse &amp; Maven." />
+  <link rel="canonical" href="{{site.url}}{{page.url}}" />
+  <meta property="og:url" content="{{site.url}}{{page.url}}" />
+  <meta property="og:site_name" content="{{site.name}}" />
+  <meta property="og:image" content="{{site.url}}/assets/images/{{page.id}}/top.jpg" />
   
-  {% if page.title %}
-  <meta property="og:title" content="{{ page.title }}" ></meta>
-  <meta property="twitter:title" content="{{ page.title }}" ></meta>
+  {% if page.id %} <!-- if it's an article -->
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="{{ page.date | date_to_xmlschema }}" />
+  
+  {% if page.updated %}
+  	<meta property="article:modified_time" content="{{ page.updated | date_to_xmlschema }}" />
   {% endif %}
   
+  <meta content="{{site.author}}" property="article:author">
+  
+  {% if page.categories %}
+	  {% for category in page.categories limit:1 %}
+	  <meta content="{{ category }}" property="article:section">
+	  {% endfor %}
+  {% endif %}
+  
+  {% if page.tags %}
+	  {% for tag in page.tags %}
+	  <meta content="{{ tag }}" property="article:tag">
+	  {% endfor %}
+  {% endif %}
+  
+  
+  {% else %}
+  	<meta property="og:type" content="website" />
+  {% endif %}
+  
+  <script type="application/ld+json">
+{"@context": "http://schema.org",
+"@type": "BlogPosting",
+"headline": "Quickstart Json RESTful microservice with Spring-Boot",
+"datePublished": "2017-02-02T08:00:00+01:00",
+"description": "In this post you will learn how to create a RESTful microservice from scratch using Spring-Boot, Eclipse &amp; Maven.",
+"url": "http://localhost:4000/posts/quickstart-rest-microservice-with-spring-boot/"}</script>
+ 
+  <link rel="author" href="{{site.author}}"/>
+
+   <!-- End SEO stuff -->
+   
   <link rel="stylesheet" href="/assets/css/bootstrap.min.css" />
   <link rel="stylesheet" href="/assets/css/font-awesome/css/font-awesome.min.css" />
   <link rel="stylesheet" href="/assets/css/main.css" />
