@@ -3,7 +3,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" ></meta>
   <link rel="shortcut icon" type="image/png" href="/icon.png" />
   
-  <meta name="twitter:card" content="summary">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@koint">
   <meta name="twitter:creator" content="@koint">
   
@@ -21,7 +21,7 @@
   {% else %}
 	  <meta name="description" content="{{page.excerpt | strip_html}}" />
 	  <meta property="og:description" content="{{page.excerpt | strip_html}}" />
-	  <meta name="twitter:description" content="{{page.description}}">
+	  <meta name="twitter:description" content="{{page.excerpt | strip_html}}">
   {% endif %}
   <link rel="canonical" href="{{site.url}}{{page.url}}" />
   <meta property="og:url" content="{{site.url}}{{page.url}}" />
