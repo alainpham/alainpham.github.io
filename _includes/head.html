@@ -19,11 +19,8 @@
   
   {% if page.id %} <!-- if it's an article -->
   <meta property="og:type" content="article" />
-  <meta property="article:published_time" content="{{ page.date | date_to_xmlschema }}" />
-  
-  {% if page.updated %}
-  	<meta property="article:modified_time" content="{{ page.updated | date_to_xmlschema }}" />
-  {% endif %}
+  <meta property="article:published_time" content="{{ page.published | date_to_xmlschema }}" />
+  <meta property="article:modified_time" content="{{ page.date | date_to_xmlschema }}" />
   
   <meta content="{{site.author}}" property="article:author">
   
@@ -38,20 +35,34 @@
 	  <meta content="{{ tag }}" property="article:tag">
 	  {% endfor %}
   {% endif %}
-  
-  
-  {% else %}
-  	<meta property="og:type" content="website" />
-  {% endif %}
-  
-  <script type="application/ld+json">
+
+    <script type="application/ld+json">
 {"@context": "http://schema.org",
 "@type": "BlogPosting",
-"headline": "Quickstart Json RESTful microservice with Spring-Boot",
-"datePublished": "2017-02-02T08:00:00+01:00",
-"description": "In this post you will learn how to create a RESTful microservice from scratch using Spring-Boot, Eclipse &amp; Maven.",
-"url": "http://localhost:4000/posts/quickstart-rest-microservice-with-spring-boot/"}</script>
- 
+"headline": "{{page.title}}",
+"datePublished": "{{ page.published | date_to_xmlschema }}",
+  {% if page.description %}
+"description": "{{page.description}}",
+  {% else %}
+"description": "{{page.excerpt | strip_html}}",
+  {% endif %}
+"url": "{{site.url}}{{page.url}}"}</script>
+   
+  {% else %} <!-- its not an article -->
+  	<meta property="og:type" content="website" />
+  	
+  	    <script type="application/ld+json">
+{"@context": "http://schema.org",
+"@type": "WebSite",
+"headline": "{{page.title}}",
+  {% if page.description %}
+"description": "{{page.description}}",
+  {% else %}
+"description": "{{page.excerpt | strip_html}}",
+  {% endif %}
+"url": "{{site.url}}{{page.url}}"}</script>
+  {% endif %} 
+  
   <link rel="author" href="{{site.author}}"/>
 
    <!-- End SEO stuff -->

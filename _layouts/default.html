@@ -5,6 +5,10 @@
 	{% include header.html %}
 	<div class="container">
 	{{ content }}
+	
+	<p>Originally published {{ page.published | date: '%B %d, %Y' }}
+    <br> Latest update {{ page.date | date: '%B %d, %Y' }}</p>
+	
 	{% include disqus.html %}
 	</div>
 	{% include footer.html %}
