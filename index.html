@@ -1,20 +1,35 @@
+--- 
+layout: default 
+title: Alain's Tech Blog 
+description: Sharing about Application Development, Integration, Cloud, Big Data and Digital Transformation 
+comments: true 
 ---
-layout: default
-title: Alain's Tech Blog
-description: Sharing about Application Development, Integration, Cloud, Big Data and Digital Transformation
-comments: true
----
-
-<h1>Recent posts</h1>
-
-
 <div class="list-group">
-  {% for post in site.posts %}
-  <a href="{{ post.url }}" class="list-group-item">
-    <h4 class="list-group-item-heading">{{ post.title }}</h4>
-    <h5 class="list-group-item-heading"> {{ post.date | date: '%B %d, %Y' }} </h5>
-    <p >{{ post.excerpt | strip_html}}</p>
-  </a>
-  {% endfor %}
+	{% for post in site.posts %} 
+	<div class="list-group-item">
+	<a href="{{ post.url }}">
+		<h2 class="list-group-item-heading">{{ post.title }}</h2>
+		<h5 class="list-group-item-heading">{{ post.date | date: '%B %d,
+			%Y' }}</h5></a>
+		{% for tag in post.tags %}
+		<a class="label label-default" href="/tags/#{{ tag | slugify }}">{{ tag }}</a>
+		{% endfor %}
+				
+		{% if post.github %}
+		<p>
+		
+			<a href="{{ post.github }}">
+			<i class="fa fa-github fa-2x"></i> {{ post.github }}
+			</a>
+		</p>
+		{% endif %}		
+		<img
+			alt="{{ post.title }}"
+			src="/assets/images/{{post.id}}/top.jpg" class="img-responsive">
+		<p>{{ post.excerpt | strip_html}}</p>
+		<a href="{{ post.url }}">Read more...</a>
+
+	</div>
+	{% endfor %}
 </div>
 

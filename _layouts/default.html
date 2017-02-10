@@ -4,7 +4,23 @@
 <body>
 	{% include header.html %}
 	<div class="container">
+	
+	{% if page.id %}
+	<p>
+	{% for tag in page.tags %}
+		<a class="label label-default" href="/tags/#{{ tag | slugify }}">{{ tag }}</a>
+    {% endfor %}
+    </p>
+    	<a href="{{ page.github }}" class="btn btn-default">
+		    <i class="fa fa-github fa-2x"></i>  {{ page.github }}
+		  </a>
+	</p>
+	<hr>
+	{% endif %}
+	
 	{{ content }}
+	
+	
 	{% if page.id %}
 	<p>Originally published {{ page.published | date: '%B %d, %Y' }}
     <br> Latest update {{ page.date | date: '%B %d, %Y' }}</p>
