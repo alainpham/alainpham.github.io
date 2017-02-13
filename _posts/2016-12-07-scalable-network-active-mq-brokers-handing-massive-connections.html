@@ -17,16 +17,18 @@ github: "https://github.com/alainpham/amq-broker-network"
 	often emerges with IoT &amp; Big Data projects where a massive
 	number of sensors are potentially connected to produce messages that
 	need to be processed and stored.</p>
+<p>This post explains how to address this challenge using the concept of network brokers in JBoss Active MQ.</p>
+
 <!--more-->
 An important thing to bare in mind when speaking of scaling the messaging infrastructure is that one must consider 2 distinct capabilities
 <ul>
  	<li>scaling up when there is heavy load</li>
  	<li>scaling down to save costs when compute power is not need</li>
 </ul>
-<p>This post explains how to address this challenge using the concept of network brokers in JBoss Active MQ.</p>
 
 <p>At the time of writing the uses cases in this post have been tested with JBoss Active MQ 6.3.0</p>
 <h1>Choosing the right topology</h1>
+
 <p>Choosing the right broker network topology is a crucial step.
 
 There are many examples of network topology that can be found in the official JBoss ActiveMQ documentation :
@@ -79,16 +81,17 @@ To achieve this we can set the following options within the transport connectors
  	<li>updateClusterFilter : a regular expression that allows to trigger client updates only on certain brokers that join the network. In our case for example we only want brokers from layer 2 to trigger reconnects.</li>
 </ul>
 
-<pre>
-&lt;transportConnectors&gt;
-	&lt;transportConnector
+{% highlight xml %}
+<transportConnectors>
+	<transportConnector
 		name="clients"
 		rebalanceClusterClients="true" 
 		updateClusterClients="true"
 		updateClusterClientsOnRemove="true" 
 		updateClusterFilter="amq-c.*"
-		uri="tcp://localhost:61620" /&gt;
-&lt;/transportConnectors&gt;</pre>
+		uri="tcp://localhost:61620" />
+</transportConnectors>
+{% endhighlight %}
  
  <p>
 Further options on the transport connector can be found here :
@@ -139,12 +142,14 @@ This usually happens when the local consumer is slowing down. A good messaging 
 On the other hand though, the consequences of this is that messages might get stuck at some point. There is a rule saying that a message cannot go back to a broker that has already been visited. So imagine if the fast consumer suddenly disconnects, our message here will get stuck in c01.
 <h2>How to avoid stuck messages ?</h2>
 To avoid messages getting stuck we need to add the replayWhenNoConsumers policy on the queues that are used within the network.
-<pre>&lt;policyEntry queue="sensor.events" queuePrefetch="1"&gt;
- &lt;networkBridgeFilterFactory&gt;
- &lt;conditionalNetworkBridgeFilterFactory
- replayDelay="1000" replayWhenNoConsumers="true" /&gt;
- &lt;/networkBridgeFilterFactory&gt;
-&lt;/policyEntry&gt;</pre>
+{% highlight xml %}
+<policyEntry queue="sensor.events" queuePrefetch="1">
+ <networkBridgeFilterFactory>
+ <conditionalNetworkBridgeFilterFactory
+ replayDelay="1000" replayWhenNoConsumers="true" />
+ </networkBridgeFilterFactory>
+</policyEntry>
+{% endhighlight %}
 This allows messages that are on a broker without any local consumer to revisit a previous broker.
 <h2>Other important configurations</h2>
 To ensure that the messages are prioritizing the shortest paths, these options need to be set on the network connectors :

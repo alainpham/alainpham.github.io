@@ -68,49 +68,48 @@ github: "https://github.com/alainpham/rest-service"
 
 <p>Add these parent, dependencies, and plugin blocs to your pom</p>
 
-<pre>
-&lt;project xmlns=&quot;http://maven.apache.org/POM/4.0.0&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
-	xsi:schemaLocation=&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&quot;&gt;
-	&lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
-	&lt;groupId&gt;com.test&lt;/groupId&gt;
-	&lt;artifactId&gt;rest-service&lt;/artifactId&gt;
-	&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+{% highlight xml %}
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.test</groupId>
+	<artifactId>rest-service</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
 
-	&lt;parent&gt;
-		&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
-		&lt;artifactId&gt;spring-boot-starter-parent&lt;/artifactId&gt;
-		&lt;version&gt;1.5.1.RELEASE&lt;/version&gt;
-	&lt;/parent&gt;
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>1.5.1.RELEASE</version>
+	</parent>
 
-	&lt;dependencies&gt;
-		&lt;dependency&gt;
-			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
-			&lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
-		&lt;/dependency&gt;
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
 
-		&lt;dependency&gt;
-			&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
-			&lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
-			&lt;scope&gt;test&lt;/scope&gt;
-		&lt;/dependency&gt;
-	&lt;/dependencies&gt;
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
 
-	&lt;build&gt;
-		&lt;plugins&gt;
-			&lt;plugin&gt;
-				&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
-				&lt;artifactId&gt;spring-boot-maven-plugin&lt;/artifactId&gt;
-			&lt;/plugin&gt;
-		&lt;/plugins&gt;
-	&lt;/build&gt;
-
-&lt;/project&gt;
-</pre>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+</project>
+{% endhighlight %}
 
 
 <h1>Create Application class</h1>
 
-<pre>
+{% highlight java %}
 package com.app;
 
 import org.springframework.boot.SpringApplication;
@@ -129,10 +128,10 @@ public class Application {
 	}
 
 }
-</pre>
+{% endhighlight %}
 
 <h1>Create a business model</h1>
-<pre>
+{% highlight java %}
 package com.app.model;
 
 public class Person {
@@ -156,10 +155,10 @@ public class Person {
 	
 	
 }
-</pre>
+{% endhighlight %}
 
 <h1>Create a service</h1>
-<pre>
+{% highlight java %}
 package com.app.service;
 
 import java.util.HashMap;
@@ -199,23 +198,25 @@ public class PersonService {
 		return personMap.get(id);
 	}
 }
-</pre>
+{% endhighlight %}
 
 <h1>Run your application</h1>
 
 <p>Open a command prompt in the root folder of your project and run : </p>
-<pre>mvn spring-boot:run</pre>
+{% highlight shell %}
+mvn spring-boot:run
+{% endhighlight %}
 
 <p>You can now also build your package and run the flat jar file</p>
-<pre>
+{% highlight shell %}
 mvn package
 java -jar target/rest-service-0.0.1-SNAPSHOT.jar
-</pre>
+{% endhighlight %}
 
 <p>Now open your browser and consume your microservice by entering the following url</p>
-<pre>
+{% highlight shell %}
 http://localhost:8080/svc/person/1
-</pre>
+{% endhighlight %}
 
 <a href="/assets/images/{{page.id}}/consume.png"> <img
 	class="center-block img-responsive"

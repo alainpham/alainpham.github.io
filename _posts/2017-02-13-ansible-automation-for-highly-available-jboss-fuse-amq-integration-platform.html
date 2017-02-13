@@ -1,0 +1,214 @@
+---
+layout: default
+title:  "Ansible Automation for Highly Available JBoss Fuse/A-MQ Integration Platform"
+date:   2017-02-13 09:00:00 +0200
+published: 2017-02-13 09:00:00 +0200
+comments: true
+categories: automation
+tags: [jboss-fuse, ansible, automation, integration, ha, scalability]
+github: "https://github.com/alainpham/ansible-role-jboss-fuse-amq-ha"
+---
+
+<p>Most integration/service platform projects start small but 
+need to ensure high availability requirements and be scalable to handle growing workloads.
+This article shows how to use Ansible to automatically provision servers with JBoss Fuse and JBoss ActiveMQ instances 
+to get a highly available service and messaging platform.
+</p>
+<!--more-->
+
+<h1>
+Minimal Highly Available Architecture
+</h1>
+
+<p>
+What does a new born reliable Integration Platform look like? 
+It needs at least 4 machines and a shared storage (NFSV4 or GFS2) as described in the following paragraphs. 
+</p>
+
+
+<a href="/assets/images/{{page.id}}/minimal-fuse-amq-ha.png"> <img
+	class="center-block img-responsive"
+	src="/assets/images/{{page.id}}/minimal-fuse-amq-ha.png" /></a>
+
+
+<h2>
+  Two machines with JBoss Fuse 
+</h2>
+Here we will run 2 active instances of JBoss Fuse.
+We will deploy our services on both machines to get high availablity and also load balancing.
+<h2>
+  Two machines with JBoss A-MQ
+</h2>
+  <p>Here we will run 2 couples of failover configured A-MQ instances. 
+  We link them together in a network of brokers.
+  In the nominal case. A-MQ A instance, should be active on one machine, A-MQ B instance should be active on the other machine.
+  Their failover instances are placed symmetrically on the other machine.
+  </p>
+  <p>
+  This configuration has several advantages :
+  </p>
+<ul>
+ <li>The messaging load is distributed on both machines thus giving a better resource utilization than just having a unique failover configuration</li>
+ <li>Shorter downtime when one machine fails can be achieved. 
+ 
+ The failover mechanism takes time to perform since it needs to detect that the lock on 
+ the store has been released. Disconnected clients can reconnect immediately to the other active instance in the network and render service while 
+ the failover instance resumes pending messages of the crashed instance.
+ </li>
+</ul>
+
+<p>
+One might argue that dedicating machines to A-MQ is overkill at the beginning. Why don't just put them also on 
+the same machines as the JBoss Fuse engines? 
+Well that can be true if messaging is not that highly demanding in our use cases, but limitations will appear quickly when
+trying to scale the messaging infrastructure once the platform grows. In fact we would like to be able to scale your messaging
+infrastructure independently from the application services hosted on JBoss Fuse instances. Hence, if we do not allocate resources to
+A-MQ from the beginning, our new born might be crippled and not be able to grow in the future.
+</p>
+
+<h1>
+Create an Ansible Role
+</h1>
+
+<p>
+Ansible is a powerful tool to automate IT infrastructure provisioning, application deployment, configuration management and continuous delivery.
+It is an agentless system meaning that we do not have to install anything on the target machines. 
+The only thing that is needed is a standard ssh access.
+</p>
+
+<p>
+To get the cluster up and running in little time, I have created an Ansible role that automates the following tasks :
+<a href="https://github.com/alainpham/ansible-role-jboss-fuse-amq-ha">
+https://github.com/alainpham/ansible-role-jboss-fuse-amq-ha
+</a> 
+</p>
+
+<ul>
+	<li>
+		Upload packages to target machines
+	</li>
+	<li>
+	    Setup default users for Fuse/A-MQ
+	</li>
+	<li>
+	    Setup different ports (Hawtio, JMX, ssh, Openwire..) and folders for Fuse/A-MQ
+	</li>
+	<li>
+	    If A-MQ network of brokers is activated, it will configure network connectors from on A-MQ towards another
+	</li>
+</ul>
+
+<p>
+Below is the default variables file to run the role.
+</p>
+
+{% highlight yml %}
+---
+########################################################
+#This lists all used variables with their sane defaults
+
+####################################
+#### Generic variables
+####################################
+#path to the Fuse or A-MQ package
+src_package_path: ./distrib/
+
+#temporary folder on target host to unzip the package
+temp_folder: /home/user/tmp/
+
+#Fuse or A-MQ package to be installed with version
+artifact: jboss-fuse-karaf-6.3.0.redhat-187.zip
+
+#folder on target host 
+target_package_folder: /home/user/fuse
+
+karaf_ssh_port: 8101
+karaf_http_port: 8181
+rmi_server_port: 44444
+rmi_registry_port: 1099
+
+#setup default users
+users: 
+  - 
+    password: admin
+    roles: 
+      - admin
+    username: admin
+  - 
+    password: guest
+    roles: 
+      - viewer
+    username: guest
+
+####################################
+#### A-MQ variables
+####################################
+
+#flag to choose whether to setup a network of A-MQ brokers
+setup_amq_network: no
+
+#########The following variables shoud be redefined in host_vars
+amq_broker_name: amq
+amq_openwire_port: 61616
+amq_data_store_folder: ${karaf.data}/amq
+#this is an example of the list of target brokers
+networked_hosts:
+  -  connect_to_host: amq-b
+     master: amq-b-master
+     slave: amq-b-slave
+
+{% endhighlight %}
+<p>
+In order to run it, we must create a playbook and redefine those variables for Fuse machines and each A-MQ host.
+You can find an example play book in the test folder. 
+</p>
+
+<pre>
+├── ansible.cfg
+├── distrib                -> folder to put packages in
+│   ├── jboss-a-mq-6.3.0.redhat-187.zip
+│   ├── jboss-fuse-karaf-6.3.0.redhat-187.zip
+│   └── readme.txt
+├── group_vars
+│   ├── all.yml            -> all the default variables
+│   ├── amq.yml            -> all defaults related to A-MQ machines
+│   └── fuse.yml           -> all defailts related to Fuse machines
+├── host_vars              -> specific configuration to hosts. 
+│   ├── amq-a-master.yml   
+│   ├── amq-a-slave.yml
+│   ├── amq-b-master.yml
+│   └── amq-b-slave.yml
+├── inventory
+└── playbook.yml
+</pre>
+
+
+
+<h1>
+How to scale up the infrastructure?
+</h1>
+<p>
+So now the question is how do we grow this new born infrastructure?
+For JBoss Fuse instances, it is very straightforward, just add machines to the inventory and Ansible will take care of setting up this machine.
+</p>
+<p>
+For Active MQ, we need to think first about the topology of our network. Depending on the use cases this might differ.
+I have written a previous post detailing the concentrator topology for some IOT purposes. It also explains how to scale down a network of brokers properly.
+<br>
+<a href="/posts/scalable-network-active-mq-brokers-handing-massive-connections/">
+Scalable Network of Active MQ brokers for handing massive connections
+</a>
+</p>
+
+
+
+<h1>
+What next?
+</h1>
+<p>You can learn the basics about Ansible go to <a href="https://www.ansible.com/get-started">https://www.ansible.com/get-started</a>.
+<br>
+At some point you might want to scale down your integration platform, you can go ahead and make an Ansible role to automate down scaling.
+Furthermore you could write Ansible scripts to automate application deployments to Fuse containers. 
+</p> 
+
+

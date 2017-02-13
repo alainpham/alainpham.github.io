@@ -16,6 +16,7 @@
 		  </a>
 	</p>
 	<hr>
+	<h1>Abstract</h1>
 	{% endif %}
 	
 	{{ content }}
@@ -24,6 +25,22 @@
 	{% if page.id %}
 	<p>Originally published {{ page.published | date: '%B %d, %Y' }}
     <br> Latest update {{ page.date | date: '%B %d, %Y' }}</p>
+    
+    <p><strong>Related posts :</strong></p>
+        <ul>
+	    {% for allpost in site.posts %}
+			  {% for tag in page.tags %}
+			  {% if allpost.tags contains tag and allpost.id != page.id %}
+			  <li>
+			      <a href="{{ allpost.url }}">
+			        {{ allpost.title }}
+			      </a>
+			  </li>
+			  {% break %}
+			  {% endif %}
+			  {% endfor %} 
+		{% endfor %}
+		</ul> 
 	{% endif %}
 	
 	{% include disqus.html %}
