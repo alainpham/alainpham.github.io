@@ -41,7 +41,7 @@ We will deploy our services on both machines to get high availablity and also lo
 </h2>
   <p>Here we will run 2 couples of failover configured A-MQ instances. 
   We link them together in a network of brokers.
-  In the nominal case. A-MQ A instance, should be active on one machine, A-MQ B instance should be active on the other machine.
+  In the nominal case, A-MQ A instance should be active on one machine and A-MQ B instance should be active on the other machine.
   Their failover instances are placed symmetrically on the other machine.
   </p>
   <p>
@@ -58,16 +58,16 @@ We will deploy our services on both machines to get high availablity and also lo
 </ul>
 
 <p>
-One might argue that dedicating machines to A-MQ is overkill at the beginning. Why don't just put them also on 
+One might argue that dedicating machines to A-MQ is an overkill at the beginning. Why not just put them also on 
 the same machines as the JBoss Fuse engines? 
 Well that can be true if messaging is not that highly demanding in our use cases, but limitations will appear quickly when
 trying to scale the messaging infrastructure once the platform grows. In fact we would like to be able to scale your messaging
-infrastructure independently from the application services hosted on JBoss Fuse instances. Hence, if we do not allocate resources to
+infrastructure independently from the application services hosted on JBoss Fuse instances. In other words, if we do not allocate resources to
 A-MQ from the beginning, our new born might be crippled and not be able to grow in the future.
 </p>
 
 <h1>
-Create an Ansible Role
+Create an Ansible Role for automation
 </h1>
 
 <p>
@@ -78,9 +78,7 @@ The only thing that is needed is a standard ssh access.
 
 <p>
 To get the cluster up and running in little time, I have created an Ansible role that automates the following tasks :
-<a href="https://github.com/alainpham/ansible-role-jboss-fuse-amq-ha">
-https://github.com/alainpham/ansible-role-jboss-fuse-amq-ha
-</a> 
+
 </p>
 
 <ul>
@@ -94,12 +92,16 @@ https://github.com/alainpham/ansible-role-jboss-fuse-amq-ha
 	    Setup different ports (Hawtio, JMX, ssh, Openwire..) and folders for Fuse/A-MQ
 	</li>
 	<li>
-	    If A-MQ network of brokers is activated, it will configure network connectors from on A-MQ towards another
+	    If A-MQ network of brokers is activated, it will configure network connectors from one A-MQ instance to another
 	</li>
 </ul>
-
 <p>
-Below is the default variables file to run the role.
+	<a href="https://github.com/alainpham/ansible-role-jboss-fuse-amq-ha">
+	https://github.com/alainpham/ansible-role-jboss-fuse-amq-ha
+	</a>
+</p> 
+<p>
+Below are the default variables to run the role.
 </p>
 
 {% highlight yml %}
@@ -193,7 +195,7 @@ For JBoss Fuse instances, it is very straightforward, just add machines to the i
 </p>
 <p>
 For Active MQ, we need to think first about the topology of our network. Depending on the use cases this might differ.
-I have written a previous post detailing the concentrator topology for some IOT purposes. It also explains how to scale down a network of brokers properly.
+I have written a previous post detailing the concentrator topology for IOT purposes. It also explains how to scale down a network of brokers properly.
 <br>
 <a href="/posts/scalable-network-active-mq-brokers-handing-massive-connections/">
 Scalable Network of Active MQ brokers for handing massive connections
