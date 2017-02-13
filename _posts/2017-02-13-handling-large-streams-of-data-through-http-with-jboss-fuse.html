@@ -2,14 +2,118 @@
 layout: default
 title:  "Handling Large Streams of Data through HTTP with JBoss Fuse"
 date:   2017-02-13 09:00:00 +0200
-published: false
+published: 2017-02-13 09:00:00 +0200
 comments: true
 categories: development
-tags: [jboss-fuse, integration, development, data]
-github: "https://github.com/alainpham/ansible-role-jboss-fuse-amq-ha"
+tags: [jboss-fuse, integration, development, data, api, camel]
+github: "https://github.com/alainpham/large-http-streams"
 ---
 
-<p>Under construction
+<p>
+Service and api platforms are mostly real time oriented and handle small amounts of data that can be easily processed in memory.
+But for many legacy purposes and for content management systems, being able 
+to handle large sets of data is a very common requirement. 
+This article shows how to easily send and receive large data files through HTTP with JBoss Fuse using streams. 
+The main objective of being able to use streams is to avoid running into out of memory issues. 
 </p>
 <!--more-->
 
+<h1>
+JBoss Fuse and its streaming capabilities
+</h1>
+
+<p>As a beginner at JBoss Fuse (particularly camel), you might have faced a few issues when the content of
+ the message body was a stream. If the body needs to be read more than once, it will result in 
+ an exception at the second read attempt. 
+ This is obviously because by default a stream can only be read once.
+ It can be quite confusing at the beginning but this gives such great flexibility as to how to process the content.
+ The customizations for handling stream is powerful and allows advanced tuning.
+ As an example, this is what could be done with a stream : 
+  </p>
+  <ul>
+  	<li>Load all into memory : this is the most basic thing to do if you want to be able to read the content twice.
+  	But it is not possible when the content size is too large.
+  	</li>
+  	<li>
+  	Load the content bloc by bloc to apply processing : this is useful if processing needs to be applied to the content. 
+  	Note that the content could be of any format here (xml, csv, binary..)
+  	</li>
+  	<li>Applying routing condition based on the size of the stream : the content could be loaded partially into memory
+  	to be routed through a messaging channel (i.e A-MQ).
+  	But if the size of content reaches a certain limit it could be written as a file instead 
+  	to be transfered through a proper file transfer protocol. This would prevent
+  	 large content from breaking the message broker.
+  	</li>
+  </ul>
+  
+ <p>
+ 
+ <h1>Streaming data with camel-jetty, camel-http4 and file components</h1>
+<p>Components such as the camel-jetty, the camel-http4 and the file components that we will use here, do not load the entire payload into memory for processing *
+unless force it explicitly.
+Instead they will set the message body to a stream object (a pointer) that can be passed through the camel route and
+be read only needed.
+You can find an implementation example using these components here : 
+<br>
+<a href="https://github.com/alainpham/large-http-streams">https://github.com/alainpham/large-http-streams</a>
+</p>
+<p>
+Below is the workflow implemented in the code example. The content of the input file is never loaded entirely into memory.
+</p>
+
+<a href="/assets/images/{{page.id}}/process_stream_file_http.png"> <img
+	class="center-block img-responsive"
+	src="/assets/images/{{page.id}}/process_stream_file_http.png" /></a>
+
+{% highlight xml %}
+
+<camelContext xmlns="http://camel.apache.org/schema/spring">
+	<route>
+		<from uri="file:input?include=.*ready&amp;move=done" />
+		<setHeader headerName="CamelHttpMethod">
+			<constant>PUT</constant>
+		</setHeader>
+		<to uri="http4:localhost:8123"></to>
+		<log message="${body}"></log>
+	</route>
+	<route>
+		<from uri="jetty:http://0.0.0.0:8123?disableStreamCache=true"/>
+		<log message="Handling a stream of class : ${body.class}"></log>
+		<log message="${headers}"></log>
+		<to uri="file:out"></to>
+		<setBody>
+			<constant>DONE</constant>
+		</setBody>
+	</route>
+</camelContext>
+
+{% endhighlight %}
+
+<p>
+We are streaming through the initial file from end to end. In between the streams is a wire-protocol which is HTTP. 
+In order to verify that we are really streaming and not loading everything
+into memory, we can proceed as follows :
+<ul>
+<li>Set the heap size of the JVM low at about 500MB and send a 700MB file through</li> 
+<li>Watch that memory consumption actually stays stable</li>
+</ul>
+</p>
+<p>
+Otherwise, it will fail with an out of memory exception if at some point we try to convert the body to a String (i.e after the consumer camel-jetty), 
+Note also that there are some implicit type conversions such as from a File type to an output stream for the camel-http4 component. 
+</p>
+<p>The nice thing with JBoss Fuse is that although the task to handle streams is quite advanced, 
+the code stays very simple and maintainable compared to custom low level Java Code.
+This is thanks to the reusability of the frameworks components and the smart implicit type conversions built into camel. 
+
+We could now easily tweak this example to add complex patterns such as stream-parsing XML data (i.e with XTokenizer) and 
+route chunks towards other processing units. These units may run in multiple threads or engines for parallel processing and become therefore naturally scalable.
+</p>
+
+<a href="/assets/images/{{page.id}}/process_stream_xml_http.png"> <img
+	class="center-block img-responsive"
+	src="/assets/images/{{page.id}}/process_stream_xml_http.png" /></a>
+
+
+ 
+  
