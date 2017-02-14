@@ -15,14 +15,6 @@ comments: true
 		<a class="label label-default" href="/tags/#{{ tag | slugify }}">{{ tag }}</a>
 		{% endfor %}
 				
-		{% if post.github %}
-		<p>
-		
-			<a href="{{ post.github }}">
-			<i class="fa fa-github fa-2x"></i> {{ post.github }}
-			</a>
-		</p>
-		{% endif %}		
 		<img
 			alt="{{ post.title }}"
 			src="/assets/images/{{post.id}}/top.jpg" class="img-responsive">
