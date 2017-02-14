@@ -49,8 +49,8 @@ JBoss Fuse and its streaming capabilities
  <p>
  
  <h1>Streaming data with camel-jetty, camel-http4 and file components</h1>
-<p>Components such as the camel-jetty, the camel-http4 and the file components that we will use here, do not load the entire payload into memory for processing *
-unless force it explicitly.
+<p>Components such as the camel-jetty, the camel-http4 and the file components that we will use here, do not load the entire payload into memory for processing 
+unless we force it explicitly.
 Instead they will set the message body to a stream object (a pointer) that can be passed through the camel route and
 be read only needed.
 You can find an implementation example using these components here : 
