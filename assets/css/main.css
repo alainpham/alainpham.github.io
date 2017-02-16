@@ -7,6 +7,26 @@ body {
 	/* Margin bottom by footer height */
 	margin-bottom: 8em;
 	padding-top: 4.5em;
+	counter-reset: h1counter;
+	
+}
+
+h1 {
+	counter-reset: h2counter;
+}
+
+h2 {
+	counter-reset: h3counter;
+}
+
+h2:before {
+	content: counter(h2counter) ".\0000a0\0000a0";
+	counter-increment: h2counter;
+}
+
+h3:before {
+	content: counter(h2counter) "." counter(h3counter) ".\0000a0\0000a0";
+	counter-increment: h3counter;
 }
 
 .container {
@@ -29,7 +49,8 @@ body {
 .footer {
 	position: absolute;
 	padding-right: 1em;
-	padding-top: 1.5em; bottom : 0;
+	padding-top: 1.5em;
+	bottom: 0;
 	width: 100%;
 	/* Set the fixed height of the footer here */
 	height: 8em;
@@ -44,18 +65,16 @@ body {
 	text-align: right;
 }
 
-.footer-links > li {
-	padding-right : 1em;
+.footer-links>li {
+	padding-right: 1em;
 	display: inline-block;
 }
-
 
 .navbar-default {
 	background-color: black;
 	border-color: #12421f;
 	text-transform: uppercase;
 	font-size: 1.3em;
-	
 }
 
 .navbar-default .navbar-brand {

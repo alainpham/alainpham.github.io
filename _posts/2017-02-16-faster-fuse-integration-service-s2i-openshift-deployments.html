@@ -1,0 +1,474 @@
+---
+layout: default
+title:  "Faster Fuse Integration Service 2.0 S2I Openshift Deployments"
+date:   2017-02-16 01:00:00 +0200
+published: 2017-02-16 01:00:00 +0200
+comments: true
+categories: development
+tags: [jboss-fuse, fis, openshift, build-time, paas, docker]
+github: "https://github.com/alainpham/fis20-simple-svc"
+---
+
+<p>
+Openshift offers a whole pipeline to create container images directly from source code. 
+It is usable for general pupose Java applications as well as for Fuse Integration Service projects.
+This post will present how to accelerate the build time of those images by setting up a local Nexus Repository and configuring application templates
+to use this repository for the build process. The idea is not having to download from the Internet all the FIS maven dependencies when building a new project. 
+At the time of writing FIS 2.0 is available as tech preview. 
+</p>
+<!--more-->
+
+<h2>Prerequisites</h2>
+<ul>
+	<li>Openshift installed</li>
+	<li>JDK 1.8+ installed</li>
+	<li>Maven 3+ installed</li>
+</ul>
+
+<h2>
+Setting up a Nexus repository
+</h2>
+<p>The reason why build times can be long with the source S2I pipeline is because each new application build requires to spin up a
+S2I container to launch the maven goals in order to package your application. 
+Building the same application template after the first time is faster because the downloaded artifacts are reused.
+But every time we create a new application, it will go through the same initial downloading process again.
+That is why instead of having the S2I container download everything from Internet repositories each time, 
+we can setup a Nexus server that will proxy these repositories and store already downloaded artifacts locally.
+Here we will show how to setup a local standalone Nexus2 repository
+<p>
+
+<a href="/assets/images/{{page.id}}/nexus_s2i.png"> <img
+	class="center-block img-responsive"
+	src="/assets/images/{{page.id}}/nexus_s2i.png" /></a>
+
+<h3>Download Nexus 2 OSS and run it</h3>
+<p>
+Download the Nexus Repository Manager OSS 2.x package on : 
+<a href="https://www.sonatype.com/download-oss-sonatype">https://www.sonatype.com/download-oss-sonatype</a>
+</p> 
+<p>
+Unzip it and run it : 
+</p>
+
+<pre>
+./nexus console
+</pre>
+
+<h3>Setup proxy for Red Hat GA and Early Access repositories</h3>
+<p>Connect to the user interface with the user and password admin/admin123</p>
+
+<pre>
+http://localhost:8081/nexus
+</pre>
+<p>
+<a href="/assets/images/{{page.id}}/login_nexus.png"> <img
+	class="center-block img-responsive"
+	src="/assets/images/{{page.id}}/login_nexus.png" /></a>
+</p>
+<p>
+Click on Repositories and add 3 new proxy repositories
+<ul>
+<li>
+The Red Hat GA repository (jboss-ga-repository) : https://maven.repository.redhat.com/ga/
+</li>
+<li>
+The Red Hat Early Access repository (jboss-ea-repository) : https://maven.repository.redhat.com/earlyaccess/all
+</li>
+<li>
+The Fuse source repo eventually for older versions of Fuse (fuse-source) : https://repo.fusesource.com/nexus/content/groups/public/
+</li>
+</ul> 
+</p>
+
+<p>
+<a href="/assets/images/{{page.id}}/nexus_proxy_repo.png"> <img
+	class="center-block img-responsive"
+	src="/assets/images/{{page.id}}/nexus_proxy_repo.png" /></a>
+</p>
+
+<h3>Setup public group for all proxy repositories</h3>
+<p>Select the public group, add all the created proxy repositories and maven central.</p>
+<p>
+<a href="/assets/images/{{page.id}}/nexus_public_group.png"> <img
+	class="center-block img-responsive"
+	src="/assets/images/{{page.id}}/nexus_public_group.png" /></a>
+</p>
+
+<p>
+That's it, you have successfully setup your local Maven repository that will keep a local copy off all downloaded artifacts.
+</p>
+
+<h2>
+Create a Fuse project with the Java Spring Boot archetype for Openshift
+</h2>
+
+<p>
+Now in order to test a deployment let's create a Fuse project. Before we begin make sure that you have these prerequisites 
+on your developer machine : 
+<ul>
+<li>JDK 1.7+ installed</li>
+<li>Maven installed</li>
+</ul>
+</p>
+
+<h3>Configure maven settings</h3>
+
+<p>
+Make sure to configure your maven settings.xml file and add the Red Hat GA and Early access repositories to it.
+</p>
+
+{% highlight xml %}
+<profile>
+  <id>rh-repos</id>
+<repositories>
+	<!-- EARLY ACCESS RH-->
+	<repository>
+      <id>jboss-ea-repository</id>
+      <url>https://maven.repository.redhat.com/earlyaccess/all</url>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository> 
+    
+	<!-- Global Availability RH-->
+      <repository>
+      <id>jboss-ga-repository</id>
+      <url>https://maven.repository.redhat.com/ga/</url>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    
+    <!-- Fuse Source GA--> 
+    <repository>
+      <id>fuse-source</id>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <name>FuseSource Release Repository</name>
+      <url>http://repo.fusesource.com/nexus/content/repositories/releases</url>
+    </repository>
+  </repositories>
+  
+  
+  <pluginRepositories>
+	<!-- EARLY ACCESS RH-->
+	<pluginRepository>
+      <id>jboss-ea-plugin-repository</id>
+      <url>https://maven.repository.redhat.com/earlyaccess/all</url>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository> 
+	  
+	<!-- Global Availability RH-->
+    <pluginRepository>
+       <id>jboss-ga-plugin-repository</id>
+      <url>https://maven.repository.redhat.com/ga/</url>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+    
+    <!-- Fuse Source GA--> 
+    <pluginRepository>
+      <id>fusesource-plugin</id>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <name>FuseSource Release Repository</name>
+      <url>http://repo.fusesource.com/nexus/content/repositories/releases</url>
+    </pluginRepository>
+  </pluginRepositories>
+
+</profile>
+</profiles>
+
+
+<activeProfiles>
+ <activeProfile>rh-repos</activeProfile>
+</activeProfiles>
+{% endhighlight %}
+
+
+<h3>Create a FIS Spring Boot project</h3>
+
+<pre>
+mvn archetype:generate \
+  -DarchetypeCatalog=https://maven.repository.redhat.com/earlyaccess/all/io/fabric8/archetypes/archetypes-catalog/2.2.180.redhat-000004/archetypes-catalog-2.2.180.redhat-000004-archetype-catalog.xml \
+  -DarchetypeGroupId=org.jboss.fuse.fis.archetypes \
+  -DarchetypeArtifactId=spring-boot-camel-archetype \
+  -DarchetypeVersion=2.2.180.redhat-000004
+</pre>
+
+<h3>Add necessary dependencies to the pom.xml</h3>
+
+<p>
+Add these dependencies to the pom.xml file in order to create a JSON Rest Webservice.
+</p>
+
+{% highlight xml %}
+<dependency>
+	<groupId>org.apache.camel</groupId>
+	<artifactId>camel-jetty</artifactId>
+</dependency>
+<dependency>
+	<groupId>org.apache.camel</groupId>
+	<artifactId>camel-jackson</artifactId>
+</dependency>
+{% endhighlight %}
+
+<h3>Create routes to expose a rest webservice</h3>
+
+<p>Open the camel-context.xml file to create the following RestConfigurations and routes.</p>
+{% highlight xml %}
+<camelContext xmlns="http://camel.apache.org/schema/spring">
+	<restConfiguration bindingMode="json" component="jetty" enableCORS="true"
+		host="0.0.0.0" port="8666" />
+	<rest id="svc" path="/">
+		<get id="testOp" uri="test">
+			<to uri="direct:test" />
+		</get>
+	</rest>
+	<route id="testRoute">
+		<from id="testStarter" uri="direct:test" />
+		<log message="received request" />
+		<setBody>
+			<constant>Hello world</constant>
+		</setBody>
+	</route>
+</camelContext>
+{% endhighlight %}
+
+<p>To avoid a tcp port conflict with the default Nexus port (8081), make sure to change the parameter "management.port" in 
+the resources/application.properties file. You can change it to 8086 for example.</p>
+
+<p>Run the project locally to see if everything is fine. Go to the root folder of your project.</p>
+<pre>mvn spring-boot:run</pre>
+
+<p>Call the service using a browser/</p>
+<pre>http://localhost:8666/test</pre>
+
+<h3>
+Create a settings.xml file
+</h3>
+
+<p>At the root of your project copy your current maven settings.xml file 
+(the one with all the repositories defined) and add a mirror bloc as follows.
+This will be used later by Openshift S2I. It there to configure Maven to get artifacts from your local Nexus repository.</p>
+
+{% highlight xml %}
+ <mirrors>
+   <mirror>
+     <id>internal-repository</id>
+     <name>Maven Repository Manager running on repo.mycompany.com</name>
+     <url>${MVN_MIRROR}</url>
+     <mirrorOf>*</mirrorOf>
+   </mirror>
+ </mirrors>
+{% endhighlight %}
+
+<h2>Deploy on Openshift using S2i</h2>
+
+<p>Connect to your Openshift instance using the "oc" command</p>
+<pre>oc login -u developer</pre>
+
+<h3>Import the FIS 2.0 image streams</h3>
+<pre>
+wget raw.githubusercontent.com/jboss-fuse/application-templates/application-templates-2.0.redhat-000026/fis-image-streams.json
+oc create -f fis-image-streams.json
+</pre>
+
+<h3>Create an application template YAML file</h3>
+<p>This is a very crucial step. Here we will tweak the application template json/yml file so that
+the S2I takes into account the Nexus repository for the Maven build.</p>
+
+<p>Get the template json file for FIS Spring-Boot applications. Optionally you can convert the json to a yml file which I find easier to read.</p>
+<pre>
+wget https://raw.githubusercontent.com/jboss-fuse/application-templates/application-templates-2.0.redhat-000026/quickstarts/springboot-camel-template.json
+</pre>
+
+<p>The important parameters to change in the template are the following. 
+</p>
+{% highlight yml %}
+- name: APP_NAME
+  displayName: Application Name
+  required: true
+  value: springboot-rest
+  description: The name assigned to the application.
+- name: GIT_REPO
+  displayName: Git Repository URL
+  required: true
+  value: https://github.com/alainpham/fis20-simple-svc.git
+  description: The URL of the repository with your application source code.
+- name: GIT_REF
+  displayName: Git Reference
+  value: master
+  description: Set this to a branch name, tag or other ref of your repository if you
+    are not using the default branch.
+- name: APP_VERSION
+  displayName: Application Version
+  value: 0.0.1
+- name: IMAGE_STREAM_NAMESPACE
+  displayName: Image Stream Namespace
+  value: ''
+  required: false
+{% endhighlight %}
+
+<p>The most important change is the following MAVEN_ARGS parameter. It is where we point to the Nexus repo we created and where we use
+the settings.xml file at to root of the project. 
+Note that the IP address here 172.17.0.1 is the one that belongs to the host machine bound to the docker network interface. Adapt
+it to your situation if necessary.</p>
+
+{% highlight yml %}
+- name: MAVEN_ARGS
+  displayName: Maven Arguments
+  value: package -DMVN_MIRROR=http://172.17.0.1:8081/nexus/content/groups/public/ -gs settings.xml -DskipTests -Dfabric8.skip -e -B
+{% endhighlight %}
+
+<p>You should also add the following parameter to tweak the heap size of the JVM used for the maven build. In some rare cases you could run into an out of heap space exception.
+It is always good to keep control over this parameter.</p>
+
+{% highlight yml %}
+- name: MAVEN_OPTS
+  description: maven options such as heapspace
+  value: "-Xmx1024m"
+{% endhighlight %}
+
+<p>Add the environment parameter MAVEN_OPTS in the sourceStrategy bloc of the buildConfig so it is taken into account in the Maven command</p>
+
+{% highlight yml %}
+sourceStrategy:
+  from:
+    kind: ImageStreamTag
+    namespace: "${IMAGE_STREAM_NAMESPACE}"
+    name: fis-java-openshift:${BUILDER_VERSION}
+  forcePull: true
+  incremental: true
+  env:
+  - name: BUILD_LOGLEVEL
+    value: '5'
+  - name: ARTIFACT_DIR
+    value: "${ARTIFACT_DIR}"
+  - name: MAVEN_ARGS
+    value: "${MAVEN_ARGS}"
+  - name: MAVEN_ARGS_APPEND
+    value: "${MAVEN_ARGS_APPEND}"
+  - name: MAVEN_OPTS
+    value: ${MAVEN_OPTS}
+{% endhighlight %}
+
+<p>We should also add the service and routes to expose the Rest service to the external world</p>
+{% highlight yml %}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: "${APP_NAME}"
+    creationTimestamp: 
+    labels:
+      component: "${APP_NAME}"
+      group: quickstarts
+      project: "${APP_NAME}"
+      provider: s2i
+      version: "${APP_VERSION}"
+  spec:
+    ports:
+    - name: rest-svc-tcp
+      port: 8666
+      protocol: TCP
+      targetPort: 8666
+    selector:
+      component: "${APP_NAME}"
+      deploymentconfig: "${APP_NAME}"
+      group: quickstarts
+      project: "${APP_NAME}"
+      provider: s2i
+      version: "${APP_VERSION}"
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+    
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: "${APP_NAME}"
+    creationTimestamp: 
+    labels:
+      component: "${APP_NAME}"
+      group: quickstarts
+      project: "${APP_NAME}"
+      provider: s2i
+      version: "${APP_VERSION}"
+  spec:
+    to:
+      kind: Service
+      name: "${APP_NAME}"
+    port:
+      targetPort: rest-svc-tcp
+  status: {}
+{% endhighlight %}
+
+<p>This is the final file I have used : </p>
+<pre>
+wget https://raw.githubusercontent.com/alainpham/fis20-simple-svc/master/openshift/solution.yml
+</pre>
+
+<p>The working project with all the resources can be found here : </p>
+<a href="{{page.github }}">{{page.github }}</a>
+
+<h3>Deploy and run the application</h3>
+<p>You can use the command line. Alternatively you can use the Openshift UI to import the application template and deploy it.</p>
+<pre>
+oc create -f solution.yml
+oc create oc new-app springboot-rest
+</pre>
+
+<a href="/assets/images/{{page.id}}/faster_build.png"> <img
+	class="center-block img-responsive"
+	src="/assets/images/{{page.id}}/faster_build.png" /></a>
+
+<p>Test your service at the following url</p>
+<pre>
+http://springboot-rest-myproject.[yourIP].xip.io/test
+</pre>
+
+<p>Note that the build takes only about 2 minute the second time you run it instead of 20 minutes (in my case with a not so fast internet connection). This is thanks to the fact that the maven dependencies are
+taken from the local Nexus instead of being downloaded from the Internet.</p>
+
+
+
+<strong>
+Other resources : 
+</strong>
+<ul>
+<li>Video tutorial showing the source S2I method for FIS 2.0 : <a href="https://vimeo.com/194416659">https://vimeo.com/194416659</a></li>
+
+<li>Tutorial with binary S2I method (fabric8 plugin) : <a href="https://developers.redhat.com/blog/2017/01/17/getting-started-with-fuse-integration-service-2-0-tech-preview/">Getting Started with Fuse Integration Service 2.0 Tech preview</a></li>
+
+</ul>
+

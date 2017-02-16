@@ -16,9 +16,9 @@ to get a highly available service and messaging platform.
 </p>
 <!--more-->
 
-<h1>
+<h2>
 Minimal Highly Available Architecture
-</h1>
+</h2>
 
 <p>
 What does a new born reliable Integration Platform look like? 
@@ -31,14 +31,14 @@ It needs at least 4 machines and a shared storage (NFSV4 or GFS2) as described i
 	src="/assets/images/{{page.id}}/minimal-fuse-amq-ha.png" /></a>
 
 
-<h2>
+<h3>
   Two machines with JBoss Fuse 
-</h2>
+</h3>
 Here we will run 2 active instances of JBoss Fuse.
 We will deploy our services on both machines to get high availablity and also load balancing.
-<h2>
+<h3>
   Two machines with JBoss A-MQ
-</h2>
+</h3>
   <p>Here we will run 2 couples of failover configured A-MQ instances. 
   We link them together in a network of brokers.
   In the nominal case, A-MQ A instance should be active on one machine and A-MQ B instance should be active on the other machine.
@@ -66,9 +66,9 @@ infrastructure independently from the application services hosted on JBoss Fuse 
 A-MQ from the beginning, our new born might be crippled and not be able to grow in the future.
 </p>
 
-<h1>
+<h2>
 Create an Ansible Role for automation
-</h1>
+</h2>
 
 <p>
 Ansible is a powerful tool to automate IT infrastructure provisioning, application deployment, configuration management and continuous delivery.
@@ -186,9 +186,9 @@ You can find an example play book in the test folder.
 
 
 
-<h1>
+<h2>
 How to scale up the infrastructure?
-</h1>
+</h2>
 <p>
 So now the question is how do we grow this new born infrastructure?
 For JBoss Fuse instances, it is very straightforward, just add machines to the inventory and Ansible will take care of setting up this machine.
@@ -209,9 +209,9 @@ it can already be interesting to consider the Openshift iPaaS approach.
 </p>
 
 
-<h1>
+<h2>
 What next?
-</h1>
+</h2>
 <p>You can learn the basics about Ansible go to <a href="https://www.ansible.com/get-started">https://www.ansible.com/get-started</a>.
 <br>
 At some point you might want to scale down your integration platform, you can go ahead and make an Ansible role to automate down scaling.

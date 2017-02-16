@@ -27,7 +27,7 @@ An important thing to bare in mind when speaking of scaling the messaging infras
 </ul>
 
 <p>At the time of writing the uses cases in this post have been tested with JBoss Active MQ 6.3.0</p>
-<h1>Choosing the right topology</h1>
+<h2>Choosing the right topology</h2>
 
 <p>Choosing the right broker network topology is a crucial step.
 
@@ -63,7 +63,7 @@ The green arrows define a network connector. Note that these have a direction. I
 
 We also allow messages to travel between brokers of layer 2. We will see later that this allows the network to better balance the workload and to facilitates scale ups/scale downs.
 </p>
-<h1>How to scale up ?</h1>
+<h2>How to scale up ?</h2>
 Scaling up is pretty straight in this setup :
 <ul>
  	<li>To handle more connections, brokers can be added in layer 1</li>
@@ -98,7 +98,7 @@ Further options on the transport connector can be found here :
 
 <a href="https://access.redhat.com/documentation/en/red-hat-jboss-a-mq/6.3/paged/connection-reference/appendix-c-server-options">https://access.redhat.com/documentation/en/red-hat-jboss-a-mq/6.3/paged/connection-reference/appendix-c-server-options</a>
 </p>
-<h1>How to scale down?</h1>
+<h2>How to scale down?</h2>
 
 <p>Scaling down is a bit more challenging. This is because when shutting down an instance, there might be still messages remaining in the broker.
 
@@ -119,8 +119,8 @@ There might be situations where this procedure is not enough. Messages may remai
 <a href="http://joshdreagan.github.io/2016/08/22/decommissioning_jboss_a-mq_brokers/">http://joshdreagan.github.io/2016/08/22/decommissioning_jboss_a-mq_brokers/</a>.
 It describes how to read the message store to be decommissioned and forward all remaining messages.
 </p>
-<h1>How is the load distributed ?</h1>
-<h2>Deactivate conduit subscriptions on queues for better load balancing</h2>
+<h2>How is the load distributed ?</h2>
+<h3>Deactivate conduit subscriptions on queues for better load balancing</h3>
 When messages are sent to brokers in layer 1, by default these are distributed in a round robin manner to brokers in layer 2.
 
 For better load balancing on queues, conduit subscriptions can be deactivated on the brokers of layer 1. If consumers are not evenly distributed on layer 2, it allows brokers from layer 1 to be aware of that and apply the round robin algorithm on the different consumers rather than the brokers they are connected to.
@@ -128,7 +128,7 @@ For better load balancing on queues, conduit subscriptions can be deactivated on
 To have a deeper understanding you can refer to the following documentation :
 
 <a href="https://access.redhat.com/documentation/en/red-hat-jboss-a-mq/6.3/paged/using-networks-of-brokers/chapter-9-load-balancing">https://access.redhat.com/documentation/en/red-hat-jboss-a-mq/6.3/paged/using-networks-of-brokers/chapter-9-load-balancing</a>
-<h2>Message hopping on layer 2 to avoid slow consumers</h2>
+<h3>Message hopping on layer 2 to avoid slow consumers</h3>
 
 <a href="/assets/images/{{page.id}}/distributeload.png">
 <img class="center-block img-responsive" src="/assets/images/{{page.id}}/distributeload.png"/></a>
@@ -140,7 +140,7 @@ This is a very powerful feature of Active MQ that allows messages to be consumed
 This usually happens when the local consumer is slowing down. A good messaging system is one that tends to contain 0 messages (all messages are consumed as soon as they are produced). So what we can observe here is that the network of brokers is doing it's best to move the messages around so that they are consumed as fast as possible.
 
 On the other hand though, the consequences of this is that messages might get stuck at some point. There is a rule saying that a message cannot go back to a broker that has already been visited. So imagine if the fast consumer suddenly disconnects, our message here will get stuck in c01.
-<h2>How to avoid stuck messages ?</h2>
+<h3>How to avoid stuck messages ?</h3>
 To avoid messages getting stuck we need to add the replayWhenNoConsumers policy on the queues that are used within the network.
 {% highlight xml %}
 <policyEntry queue="sensor.events" queuePrefetch="1">
@@ -151,14 +151,14 @@ To avoid messages getting stuck we need to add the replayWhenNoConsumers policy 
 </policyEntry>
 {% endhighlight %}
 This allows messages that are on a broker without any local consumer to revisit a previous broker.
-<h2>Other important configurations</h2>
+<h3>Other important configurations</h3>
 To ensure that the messages are prioritizing the shortest paths, these options need to be set on the network connectors :
 <ul>
  	<li>decreaseNetworkConsumerPriority="true"</li>
  	<li>suppressDuplicateQueueSubscriptions="true"</li>
 </ul>
 &nbsp;
-<h1>Sample code &amp; configurations</h1>
+<h2>Sample code &amp; configurations</h2>
 Nothing is better than a working example. A sample project can be found in the following GitHub repo : <a href="https://github.com/alainpham/amq-broker-network">https://github.com/alainpham/amq-broker-network</a>
 
 This project populates 3 AMQ instances configured as a netwok of brokers similar to what is described in the sections above :
