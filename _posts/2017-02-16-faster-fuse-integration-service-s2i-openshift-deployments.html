@@ -1,7 +1,7 @@
 ---
 layout: default
 title:  "Faster Fuse Integration Service 2.0 S2I Openshift Deployments"
-date:   2017-02-16 01:00:00 +0200
+date:   2017-02-22 01:00:00 +0200
 published: 2017-02-16 01:00:00 +0200
 comments: true
 categories: development
@@ -11,18 +11,20 @@ github: "https://github.com/alainpham/fis20-simple-svc"
 
 <p>
 Openshift offers a whole pipeline to create container images directly from source code. 
-It is usable for general pupose Java applications as well as for Fuse Integration Service projects.
+It is usable for general purpose Java applications as well as for Fuse Integration Service projects.
 This post will present how to accelerate the build time of those images by setting up a local Nexus Repository and configuring application templates
 to use this repository for the build process. The idea is not having to download from the Internet all the FIS maven dependencies when building a new project. 
 At the time of writing FIS 2.0 is available as tech preview. 
 </p>
 <!--more-->
 
+<p>(update 22/02/2017) February 21, 2017 : FIS 2.0 GA has been released.</p>
+
 <h2>Prerequisites</h2>
 <ul>
 	<li>Openshift installed</li>
 	<li>JDK 1.8+ installed</li>
-	<li>Maven 3+ installed</li>
+	<li>Maven 3.3+ installed</li>
 </ul>
 
 <h2>
@@ -219,10 +221,10 @@ Make sure to configure your maven settings.xml file and add the Red Hat GA and E
 
 <pre>
 mvn archetype:generate \
-  -DarchetypeCatalog=https://maven.repository.redhat.com/earlyaccess/all/io/fabric8/archetypes/archetypes-catalog/2.2.180.redhat-000004/archetypes-catalog-2.2.180.redhat-000004-archetype-catalog.xml \
-  -DarchetypeGroupId=org.jboss.fuse.fis.archetypes \
-  -DarchetypeArtifactId=spring-boot-camel-archetype \
-  -DarchetypeVersion=2.2.180.redhat-000004
+ -DarchetypeCatalog=https://maven.repository.redhat.com/ga/io/fabric8/archetypes/archetypes-catalog/2.2.195.redhat-000004/archetypes-catalog-2.2.195.redhat-000004-archetype-catalog.xml  \
+ -DarchetypeGroupId=org.jboss.fuse.fis.archetypes  \
+ -DarchetypeArtifactId=spring-boot-camel-xml-archetype  \
+ -DarchetypeVersion=2.2.195.redhat-000004
 </pre>
 
 <h3>Add necessary dependencies to the pom.xml</h3>
@@ -469,6 +471,6 @@ Other resources :
 <li>Video tutorial showing the source S2I method for FIS 2.0 : <a href="https://vimeo.com/194416659">https://vimeo.com/194416659</a></li>
 
 <li>Tutorial with binary S2I method (fabric8 plugin) : <a href="https://developers.redhat.com/blog/2017/01/17/getting-started-with-fuse-integration-service-2-0-tech-preview/">Getting Started with Fuse Integration Service 2.0 Tech preview</a></li>
-
+<li>(update 22/02/2017)Official FIS 2.0 GA documentation : <a href="https://access.redhat.com/documentation/en-us/red_hat_jboss_middleware_for_openshift/3/html-single/red_hat_jboss_fuse_integration_services_2.0_for_openshift/">https://access.redhat.com/documentation/en-us/red_hat_jboss_middleware_for_openshift/3/html-single/red_hat_jboss_fuse_integration_services_2.0_for_openshift/</a></li>
 </ul>
 
