@@ -1,0 +1,652 @@
+---
+layout: default
+title:  "Fuse and Data Grid in library mode with index for searching and cache store"
+date:   2017-02-22 01:00:00 +0200
+published: false
+comments: true
+categories: development
+tags: [jboss-fuse, data-grid]
+github: "https://github.com/alainpham/techlab-fuse-jdg"
+---
+
+<p>
+Building Integration and Services platform with JBoss Fuse is great.
+It is even better when you add a distributed in memory data base solution such as JBoss Data Grid to the mix.
+This article will show how to make both products work together using the out of the box camel-jbossdatagrid component.
+It will show you how to setup JBoss Data Grid in library mode within a JBoss Fuse application and take advantage of features such
+as queries on indexed fields (uses Lucene search engine) and a persistent cache store.
+</p>
+<!--more-->
+<p>We will be building services to store and retrieve some business events. In summary the steps in this tutorial are the following</p>
+<ul>
+	<li>Create a normal Fuse project in JBoss Developer Studio with Spring DSL</li>
+	<li>Add necessary dependencies to project pom.xml file</li>
+	<li>Configure the cache container in library mode through an Data Grid xml definition file (infinispan.xml)</li>
+	<li>Configure a cache called "event" with an index (Lucene) and a cache store (H2 database as an example)</li>
+	<li>Configure an embedded H2 database in the Camel context</li>
+	<li>Create an POJO as a model of an event</li>
+	<li>Annotate the POJO to specify which fields should be indexed for queries</li>
+	<li>Create basic generic camel routes for getting and putting events into the cache</li>
+	<li>Create a query service with dynamic parameters</li>
+	<li>Test the services</li>
+</ul>
+
+<h2>Prerequisites</h2>
+<ul>
+	<li>JDK 1.8+ installed</li>
+	<li>Maven 3.3+ installed</li>
+</ul>
+<p><a href="http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
+">http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
+</a><br>
+<a href="https://maven.apache.org/download.cgi">https://maven.apache.org/download.cgi</a></p>
+<p></p>
+<h2>Versions used</h2>
+<ul>
+	<li>JBoss Fuse 6.3.0</li>
+	<li>JBoss Developer Studio Integration Stack 10.1.0 (optional)</li>
+	<li>JBoss Data Grid Camel Library 6.5.1 (downloaded through maven dependency)</li>
+</ul>
+<p><a href="https://developers.redhat.com/products/fuse/download/">https://developers.redhat.com/products/fuse/download/</a></p>
+<h2>
+Access modes to JBoss Data Grid
+</h2>
+<p>JBoss Data Grid can be accessed through 2 different modes : Library Mode and Remote Server Mode.
+<p>
+In Remote Server Mode, Data Grid is installed as a standalone distant server and Fuse gets access to the objects through the Hot Rod client.
+</p>
+<p>
+In library mode (or embedded), the Fuse engine uses it's own JVM memory to contain objects that is part of the Data Grid.
+In other words the Fuse engine acts as if it was a node that is part of the Data Grid cluster.
+This mode gives access to more advanced features such as transactions and locking. It is also very simple to setup indexing for advanced querying.
+In this article we will explore the possibilities of Library Mode. The Remote Server Mode will be discussed in an other article.
+</p>
+
+<h2>
+Create a Fuse project
+</h2>
+<ul>
+	<li>Start by creating a normal Fuse project with a Spring Camel Context in JBoss Developer Studio
+		(Alternatively it can also be created with a maven archetype via command line)</li>
+	<li>In JBoss Developer Studio go to files -> New -> Fuse Integration Project </li>
+	<li>Name the project techlab-fuse-jdg-library-mode</li>
+	<li>Select runtime version 2.17.0.redhat-630224</li>
+	<li>Start an empty project with Spring DSL</li>
+	<li>Click finish</li>
+</ul>
+<p>
+<a href="/assets/images/{{page.id}}/selectversion.png"> <img
+	class="center-block img-responsive"
+	src="/assets/images/{{page.id}}/selectversion.png" /></a>
+</p>
+<p>
+<a href="/assets/images/{{page.id}}/selectemptyandspring.png"> <img
+		class="center-block img-responsive"
+		src="/assets/images/{{page.id}}/selectemptyandspring.png" /></a>
+</p>
+
+<h2>
+Edit infos and dependencies in pom.xml file
+</h2>
+<ul>
+	<li>Change groupid, artifact id to identify the project</li>
+	<li>Add dependency to <strong>camel-jbossdatagrid</strong> component  : this enables invokation of Data Grid endpoints in a camel route</li>
+	<li>Add dependency to <strong>infinispan-embedded-query</strong> : this enables indexing and query capabilities on the embedded cache</li>
+	<li>Add dependency to <strong>h2</strong> : as an example of cache store we are using an h2 database</li>
+	<li>Add dependency to <strong>camel-netty4-http, camel-swagger-java, camel-jackson</strong> : will be used to expose rest services to access the objects stored in the cache</li>
+</ul>
+{% highlight xml %}
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>techlab</groupId>
+	<artifactId>techlab-fuse-jdg-library-mode</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
+	<packaging>bundle</packaging>
+	<name>techlab-fuse-jdg-library-mode</name>
+	<description>techlab-fuse-jdg-library-mode</description>
+	...
+	<properties>
+		<camel.version>2.17.0.redhat-630224</camel.version>
+		<version.maven-bundle-plugin>3.2.0</version.maven-bundle-plugin>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<jboss.fuse.bom.version>6.3.0.redhat-224</jboss.fuse.bom.version>
+		<version.org.infinispan>6.3.1.Final-redhat-1</version.org.infinispan>
+		<jdg.version>6.5.1.Final-redhat-1</jdg.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.jboss.fuse.bom</groupId>
+				<artifactId>jboss-fuse-parent</artifactId>
+				<version>${jboss.fuse.bom.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.infinispan</groupId>
+				<artifactId>infinispan-bom</artifactId>
+				<version>${version.org.infinispan}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+	<dependencies>
+	...
+		<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-jbossdatagrid</artifactId>
+			<version>${jdg.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.infinispan</groupId>
+			<artifactId>infinispan-embedded-query</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-netty4-http</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-swagger-java</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-jackson</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<version>1.3.168</version>
+		</dependency>
+	</dependencies>
+	...
+</project>
+{% endhighlight %}
+
+<h2>Configure Data Grid Cache Container</h2>
+<ul>
+	<li>Create the file infinispan.xml in the folder src/main/resources/infinispan/ of the Fuse project</li>
+	<li>In the xml file, declare a cache named "event"</li>
+	<li>Configure a persistence cache store so that events can survive a reboot. As an example here we will use an H2 Database.
+		We will configure the database later in the Camel context</li>
+	<li>Activate indexing to enable advanced queries using the lucene engine</li>
+	<li>Configure eviction so that objects get unloaded from memory when not used. This is to avoid running out of memory.
+		Evicted entries stay in the cache store and can be reloaded when needed</li>
+</ul>
+
+{% highlight xml %}
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan xmlns="urn:infinispan:config:6.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:jdbc="urn:infinispan:config:jdbc:6.0"
+	xsi:schemaLocation="urn:infinispan:config:6.0 http://infinispan.org/schemas/infinispan-config-6.0.xsd
+	urn:infinispan:config:jdbc:6.0 http://infinispan.org/schemas/infinispan-cachestore-jdbc-config-6.0.xsd">
+
+	<namedCache name="event">
+		<!-- At most we have 50 entries in the cache by evicting [l]east-[r]ecently-[u]sed-->
+		<eviction strategy="LRU" maxEntries="50"  />
+		<!-- Indexing is activated to be stored locally only -->
+		<indexing enabled="true" indexLocalOnly="true" >
+			<properties>
+				<property name="default.directory_provider" value="filesystem" />
+				<property name="default.indexBase" value="ispn_index" />
+			</properties>
+		</indexing>
+		<!-- A mixed store is created to be able to contain entries with string keys and also binary keys -->
+		<persistence >
+			<jdbc:mixedKeyedJdbcStore xmlns="urn:infinispan:config:jdbc:6.0" preload="true">
+				<jdbc:connectionPool connectionUrl="jdbc:h2:tcp://localhost:6331/dgdb"
+					driverClass="org.h2.Driver" username="sa" password="" />
+				<jdbc:binaryKeyedTable prefix="ISPN_MIX_BKT">
+					<jdbc:idColumn name="id" type="VARCHAR" />
+					<jdbc:dataColumn name="datum" type="BINARY" />
+					<jdbc:timestampColumn name="version" type="BIGINT" />
+				</jdbc:binaryKeyedTable>
+				<jdbc:stringKeyedTable prefix="ISPN_MIX_STR" >
+					<jdbc:idColumn name="id" type="VARCHAR" />
+					<jdbc:dataColumn name="datum" type="BINARY" />
+					<jdbc:timestampColumn name="version" type="BIGINT" />
+				</jdbc:stringKeyedTable>
+			</jdbc:mixedKeyedJdbcStore>
+		</persistence>
+	</namedCache>
+
+</infinispan>
+
+{% endhighlight %}
+
+<p>In the Camel context file reference the Data Grid configuration as follows</p>
+{% highlight xml %}
+<!-- ########################################################### -->
+<!-- Definition of embedded cache Manager -->
+<!-- ########################################################### -->
+<bean class="org.infinispan.manager.DefaultCacheManager"
+	destroy-method="stop" id="cacheManager" init-method="start">
+	<constructor-arg type="java.lang.String" value="infinispan/infinispan.xml" />
+</bean>
+{% endhighlight %}
+
+<p>Add a reusable endpoint to the camel context</p>
+
+{% highlight xml %}
+<camelContext id="techlab-fuse-jdg-library-mode" xmlns="http://camel.apache.org/schema/spring">
+	<!-- Data Grid endpoint -->
+	<endpoint id="datagrid" uri="infinispan://?cacheContainer=#cacheManager" />
+</camelContext>
+{% endhighlight %}
+
+<h2>Configure H2 data base</h2>
+<p>In the Camel context file add the following beans to create an embedded H2 database</p>
+{% highlight xml %}
+<!-- ########################################################### -->
+<!-- Embedded Database -->
+<!-- ########################################################### -->
+<bean class="org.h2.tools.Server" destroy-method="stop"
+	factory-method="createTcpServer" id="h2db" init-method="start">
+	<constructor-arg
+		value="-tcp,-tcpAllowOthers,-tcpPort,6331,-baseDir,./h2dbstore" />
+</bean>
+<bean class="org.h2.tools.Server" depends-on="h2db"
+	destroy-method="stop" factory-method="createWebServer" id="h2Server"
+	init-method="start" lazy-init="false">
+	<constructor-arg
+		value="-web,-webAllowOthers,-webPort,1112,-baseDir,./h2dbstore" />
+</bean>
+{% endhighlight %}
+
+<h2>Create a model classe for events and annotate for indexation</h2>
+
+<p>Create a class and annotate it so that it is indexed by Data Grid. Properties with the @Field annotation are indexed</p>
+
+{% highlight java %}
+package techlab.model;
+
+import java.io.Serializable;
+import java.util.Date;
+
+import org.hibernate.search.annotations.Analyze;
+import org.hibernate.search.annotations.DateBridge;
+import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.Resolution;
+
+@Indexed
+public class Event implements Serializable{
+
+	private static final long serialVersionUID = 1L;
+
+	private String uid;
+
+	@Field(analyze=Analyze.NO)
+	@DateBridge(resolution=Resolution.HOUR)
+	private Date timestmp;
+
+	@Field(analyze=Analyze.NO)
+	private String name;
+
+	private String content;
+
+	public String getUid() {
+		return uid;
+	}
+	public void setUid(String uid) {
+		this.uid = uid;
+	}
+	public Date getTimestmp() {
+		return timestmp;
+	}
+	public void setTimestmp(Date timestmp) {
+		this.timestmp = timestmp;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getContent() {
+		return content;
+	}
+
+	public void setContent(String content) {
+		this.content = content;
+	}
+
+}
+{% endhighlight %}
+
+<h2>Create rest services to get and put entries into the cache</h2>
+
+<p>Use the rest DSL to create routes and expose services to do the basic operations</p>
+
+{% highlight xml %}
+<camelContext id="techlab-fuse-jdg-library-mode" xmlns="http://camel.apache.org/schema/spring">
+	<!-- Data Grid endpoint -->
+	<endpoint id="datagrid" uri="infinispan://?cacheContainer=#cacheManager" />
+
+	<restConfiguration bindingMode="json" component="netty4-http"
+		enableCORS="true" port="7123" apiContextPath="/api-doc">
+		<dataFormatProperty key="prettyPrint" value="true" />
+	</restConfiguration>
+
+	<rest id="svc" path="">
+		<get id="getOp" uri="{cacheName}/{uid}">
+			<description>Get an entry with an ID from a cache</description>
+			<to uri="direct:getOp" />
+		</get>
+		<put id="putOp" uri="{cacheName}/{uid}" type="techlab.model.Event">
+			<description>Inserts an entry with the given ID and content in a cache</description>
+			<to uri="direct:putOp" />
+		</put>
+	</rest>
+
+	<!-- rest service to get an entry with the key -->
+	<route id="getOpRoute">
+		<from id="getOpStarter" uri="direct:getOp" />
+		<setHeader headerName="CamelInfinispanKey" id="getOpRouteSetKey">
+			<simple>${headers.uid}</simple>
+		</setHeader>
+		<setHeader headerName="CamelInfinispanCacheName" id="getOpRouteSetCacheName">
+			<simple>${headers.cacheName}</simple>
+		</setHeader>
+		<setHeader headerName="CamelInfinispanOperation" id="getOpRouteSetOperation">
+			<constant>CamelInfinispanOperationGet</constant>
+		</setHeader>
+		<to id="getOpRouteToDataGrid" uri="ref:datagrid" />
+		<setBody id="getOpRouteSetResponse">
+			<simple>${header.CamelInfinispanOperationResult}</simple>
+		</setBody>
+	</route>
+
+	<!-- rest service to put entries into a cache -->
+	<route id="putOpRoute">
+		<from id="putOpStarter" uri="direct:putOp" />
+		<setHeader headerName="CamelInfinispanKey" id="putOpRouteSetKey">
+			<simple>${headers.uid}</simple>
+		</setHeader>
+		<setHeader headerName="CamelInfinispanCacheName" id="putOpRouteSetCacheName">
+			<simple>${headers.cacheName}</simple>
+		</setHeader>
+		<setHeader headerName="CamelInfinispanOperation" id="putOpRouteSetOperation">
+			<constant>CamelInfinispanOperationPut</constant>
+		</setHeader>
+		<setHeader headerName="CamelInfinispanValue" id="putOpRouteSetValue">
+			<simple>${body}</simple>
+		</setHeader>
+		<to id="putOpRouteToDataGrid" uri="ref:datagrid" />
+		<setBody id="putOpRouteSetResponse">
+			<simple>Value inserted</simple>
+		</setBody>
+	</route>
+</camelContext>
+{% endhighlight %}
+
+<h2>Create a query service with dynamic parameters</h2>
+
+<p>Define a rest service that allows to pass any http query parameters
+	<br>(i.e http://localhost:7123/query/event/techlab.model.Event?timestmp=1462208399999&name=ended)</p>
+
+{% highlight xml %}
+<get id="queryOp" uri="query/{cacheName}/{type}">
+	<description>Allows to query based on object fields using lucene search engine</description>
+	<to uri="direct:queryOp" />
+</get>
+{% endhighlight %}
+
+<p>Create a service to run queries against the cache</p>
+
+<p>Create the processor that will be used by the camel route. Note that this class is pretty generic and is suitable to any data model.
+</p>
+
+{% highlight java %}
+package techlab.dg;
+
+import java.beans.BeanInfo;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.util.Date;
+
+import org.apache.camel.Exchange;
+import org.apache.camel.Processor;
+import org.hibernate.search.annotations.Field;
+import org.infinispan.Cache;
+import org.infinispan.manager.CacheContainer;
+import org.infinispan.query.Search;
+import org.infinispan.query.dsl.FilterConditionContext;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryBuilder;
+import org.infinispan.query.dsl.QueryFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
+public class QueryProcessor implements Processor {
+
+	final Logger logger = LoggerFactory.getLogger(QueryProcessor.class);
+
+	//cache container to be injected with another spring bean
+	private CacheContainer cacheContainer;
+
+
+	public CacheContainer getCacheContainer() {
+		return cacheContainer;
+	}
+
+
+	public void setCacheContainer(CacheContainer cacheContainer) {
+		this.cacheContainer = cacheContainer;
+	}
+
+	@Override
+	public void process(Exchange ex) throws Exception {
+
+		//Get the targeted cachename from the exchange header
+		Cache<String, Object> cache = cacheContainer.getCache(ex.getIn().getHeader("cacheName", String.class));
+
+		//Verify if the requested type exists using java reflection
+		Class c  = Class.forName(ex.getIn().getHeader("type",String.class));
+
+		QueryFactory<Query> queryFactory = Search.getQueryFactory(cache);
+
+		QueryBuilder<Query> qb = queryFactory.from(c);
+
+		FilterConditionContext ctx=null;
+
+		//inspect the searched class in order to get the fields that can be queried
+		BeanInfo info = Introspector.getBeanInfo( c,Object.class);
+
+		// for each property of the class we look if a parameter has been set
+		for ( PropertyDescriptor pd : info.getPropertyDescriptors() ){
+
+			Object searchValue = ex.getIn().getHeader(pd.getName());
+
+			//only search the fields that are actually indexed by checking the presence of Field annotation
+			boolean propIsIndexed = c.getDeclaredField(pd.getName()).getDeclaredAnnotationsByType(Field.class).length > 0;
+
+			//only add search criteria when the parameter has been set in the header and when the property is indexed
+			if (searchValue!=null && propIsIndexed){
+
+				//if field is a date convert the type explicitly
+				if (pd.getPropertyType().equals(Date.class)){
+					searchValue = new Date(Long.parseLong((String)searchValue));
+				}
+
+				if (ctx==null){ 	//first condition
+					ctx = qb.having(pd.getName()).eq(searchValue);
+				}else{ 				//additional conditions with and operator
+					ctx.and().having(pd.getName()).eq(searchValue);
+				}
+			}
+		}
+
+		Query q = qb.build();
+
+
+		ex.getIn().setBody(q.list());
+
+	}
+
+}
+{% endhighlight %}
+
+<p>Declare the processor, service end point and route in the Camel context</p>
+
+{% highlight xml %}
+<beans>
+	...
+	<bean id="queryProcessor" class="techlab.dg.QueryProcessor">
+		<property name="cacheContainer" ref="cacheManager" />
+	</bean>
+	...
+	<camelContext id="techlab-fuse-jdg-library-mode" xmlns="http://camel.apache.org/schema/spring">
+		...
+		<rest id="svc" path="" >
+			...
+			<get id="queryOp" uri="query/{cacheName}/{type}">
+				<description>Allows to query based on object fields using lucene search engine</description>
+				<to uri="direct:queryOp" />
+			</get>
+		</rest>
+		...
+		<!-- rest service to query caches with any indexed field -->
+		<route id="queryOpRoute">
+			<from id="queryOpStarter" uri="direct:queryOp" />
+			<log message="${headers}"></log>
+			<process id="queryOpRouteProcessor" ref="queryProcessor" />
+		</route>
+	</camelContext>
+</beans>
+{% endhighlight %}
+
+<h2>Test the project</h2>
+
+<p>Run the Fuse project on your dev machine</p>
+
+<pre>mvn clean package camel:run</pre>
+
+<p>Insert a few entries by running a curl command</p>
+
+<pre>
+curl -X PUT --header 'Content-Type: application/json' --header 'Accept: application/json' -d '{
+ "uid": "1",
+ "timestmp": "2017-04-07T19:30:00.000Z",
+ "name": "start",
+ "content": "party started" }' 'http://localhost:7123/event/1'
+
+curl -X PUT --header 'Content-Type: application/json' --header 'Accept: application/json' -d '{
+	"uid": "2",
+	"timestmp": "2017-04-07T22:15:00.000Z",
+	"name": "incident",
+	"content": "police arrived" }' 'http://localhost:7123/event/2'
+
+curl -X PUT --header 'Content-Type: application/json' --header 'Accept: application/json' -d '{
+	"uid": "3",
+	"timestmp": "2017-04-07T23:18:00.000Z",
+	"name": "incident",
+	"content": "host arrested" }' 'http://localhost:7123/event/3'
+
+curl -X PUT --header 'Content-Type: application/json' --header 'Accept: application/json' -d '{
+ "uid": "4",
+ "timestmp": "2017-04-07T23:20:00.000Z",
+ "name": "end",
+ "content": "party ended" }' 'http://localhost:7123/event/4'
+</pre>
+
+<p>List all events through a query without parameters</p>
+<pre>curl -X GET --header 'Accept: application/json' 'http://localhost:7123/query/event/techlab.model.Event'</pre>
+{% highlight json %}
+[ {
+  "uid" : "1",
+  "timestmp" : 1491593400000,
+  "name" : "start",
+  "content" : "party started"
+}, {
+  "uid" : "2",
+  "timestmp" : 1491603300000,
+  "name" : "incident",
+  "content" : "police arrived"
+}, {
+  "uid" : "3",
+  "timestmp" : 1491607080000,
+  "name" : "incident",
+  "content" : "host arrested"
+}, {
+  "uid" : "4",
+  "timestmp" : 1491607200000,
+  "name" : "end",
+  "content" : "party ended"
+}
+{% endhighlight %}
+
+<p>List all incidents through a query with a parameter</p>
+<pre>curl -X GET --header 'Accept: application/json' 'http://localhost:7123/query/event/techlab.model.Event?name=incident'</pre>
+{% highlight json %}
+[ {
+  "uid" : "2",
+  "timestmp" : 1491603300000,
+  "name" : "incident",
+  "content" : "police arrived"
+}, {
+  "uid" : "3",
+  "timestmp" : 1491607080000,
+  "name" : "incident",
+  "content" : "host arrested"
+} ]
+{% endhighlight %}
+
+<p>List all incidents at a certain hour with 2 parameters (the resolution of the indexed date field is by hour)</p>
+{% highlight shell %}
+curl -X GET --header 'Accept: application/json' 'http://localhost:7123/query/event/techlab.model.Event?name=incident&timestmp=1491607000000'
+{% endhighlight %}
+{% highlight json %}
+[ {
+  "uid" : "3",
+  "timestmp" : 1491607080000,
+  "name" : "incident",
+  "content" : "host arrested"
+} ]
+{% endhighlight %}
+
+
+
+<p>Alternatively you can also use swagger-ui to test the services</p>
+<ul>
+	<li>To test the services you can use swagger ui to explore the rest services.
+		Download swagger ui : <a href="https://github.com/swagger-api/swagger-ui/archive/v2.2.10.zip">https://github.com/swagger-api/swagger-ui/archive/v2.2.10.zip
+		</a></li>
+		<li>Unzip the package and open dist/index.html in your favorite browser</li>
+		<li>Enter the url of the api-doc : http://localhost:7123/api-doc</li>
+</ul>
+
+<a href="/assets/images/{{page.id}}/swagger.png"> <img
+	class="center-block img-responsive"
+	src="/assets/images/{{page.id}}/swagger.png" /></a>
+
+
+<h2>
+Deploy Fuse project to Fuse Server (Karaf)
+</h2>
+
+<pre>
+features:install camel-swagger-java camel-netty4-http camel-jackson
+features:addurl mvn:org.apache.camel/camel-jbossdatagrid/6.5.1.Final-redhat-1/xml/features
+features:install camel-jbossdatagrid
+features:addurl mvn:org.infinispan/infinispan-embedded/6.3.1.Final-redhat-1/xml/features
+features:install infinispan-embedded
+features:addurl mvn:org.infinispan/infinispan-remote/6.3.1.Final-redhat-1/xml/features
+features:install infinispan-remote
+</pre>
+
+<h2>
+Setting up a cache store to persist data
+</h2>
