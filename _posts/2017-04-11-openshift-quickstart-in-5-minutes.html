@@ -1,0 +1,173 @@
+---
+layout: default
+title:  "Openshift Quickstart in 5 minutes"
+date:   2017-04-11 01:00:00 +0200
+published: 2017-04-11 01:00:00 +0200
+comments: true
+categories: development
+tags: [openshift, paas, spring-boot]
+github: "https://github.com/alainpham/rest-service"
+---
+
+<p>
+Openshift is a PaaS solution based on Docker and Kubernetes. This article will show you how to install Openshift Origin in less than 5 minutes and deploy your first
+Java application to it.
+</p>
+<!--more-->
+
+
+<h2>Versions used</h2>
+<ul>
+	<li>Centos 7</li>
+	<li>Openshift Origin Client v1.4.1</li>
+</ul>
+
+<h2>Install docker</h2>
+
+{% highlight shell %}
+sudo yum upgrade
+sudo yum install docker
+
+{% endhighlight%}
+
+<p>Edit  /etc/sysconfig/docker and add these options</p>
+
+{% highlight shell %}
+OPTIONS='--selinux-enabled --insecure-registry 172.30.0.0/16'
+{% endhighlight%}
+
+
+
+<h2>Execute docker without sudo</h2>
+<p>Replace the ${USER} by your user name</p>
+{% highlight shell %}
+sudo groupadd docker
+sudo gpasswd -a ${USER} docker
+{% endhighlight%}
+<p>Reboot your machine</p>
+
+<h2>Test docker</h2>
+
+{% highlight shell %}
+sudo systemctl enable docker.service
+sudo systemctl start docker.service
+docker run hello-world
+{% endhighlight%}
+<p>Expected result :</p>
+<pre>
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+....
+</pre>
+
+<h2>Download Openshift client and install</h2>
+<a href="https://www.openshift.org/download.html#oc-platforms">https://www.openshift.org/download.html#oc-platforms</a>
+<p>Place the oc executable in the $PATH</p>
+<pre>
+[demo@demo-centos-vm ~]$ oc version
+oc v1.4.1+3f9807a
+kubernetes v1.4.0+776c994
+</pre>
+
+<h2>Launch Openshift Cluster</h2>
+{% highlight shell %}
+oc cluster up
+{% endhighlight%}
+
+{% highlight shell %}
+-- Checking OpenShift client ... OK
+...
+   OpenShift server started.
+   The server is accessible via web console at:
+       https://YOUR_IP_ADDRESS:8443
+
+   You are logged in as:
+       User:     developer
+       Password: developer
+
+   To login as administrator:
+       oc login -u system:admin
+
+
+{% endhighlight%}
+
+<p>Open browser and to to https://YOUR_IP_ADDRESS:8443/ and login with user/pwd : developer/developer</p>
+
+<a href="/assets/images/{{page.id}}/logged.png"> <img
+	class="center-block img-responsive"
+	src="/assets/images/{{page.id}}/logged.png" /></a>
+
+<h2>Deploy sample application</h2>
+<p>In a shell log in as admin and add the Java S2I (source to image) image streams to the openshift project.
+	This is important as we will use these images to build images from our own project source code</p>
+{% highlight shell %}
+oc login -u system:admin
+oc create -n openshift -f https://raw.githubusercontent.com/fabric8io-images/s2i/master/image-streams.json
+{% endhighlight%}
+
+<p>Login as developer and add the application template of an app. You can customize these template as you wish.
+	This is just an example of a Spring Boot java application that exposes a rest web service.
+	</p>
+	<p>If you are interested in how to create a Spring Boot Application go to this article : <a href="/posts/quickstart-rest-microservice-with-spring-boot/">quickstart-rest-microservice-with-spring-boot</a></p>
+
+	<p>In short the template describes </p>
+<ul>
+	<li>The BuildConfig : what base image needs to be used to build the images container here it's "fuse-java" (imported from the image stream previously)</li>
+	<li>The DeploymentConfig : which ports are exposed by each pod (container)</li>
+	<li>The Services: what services (tcp mostly) are exposed by the app. This is to have location independency to access services exposed by multiple pods (containers)</li>
+	<li>The Routes: in order to access a service from outside of Openshift, routes need to be created.</li>
+</ul>
+
+{% highlight shell %}
+oc login -u developer
+oc create https://raw.githubusercontent.com/alainpham/rest-service/master/openshift/openshift_origin.yml
+{% endhighlight%}
+
+<p>Open browser and login as developer to your console https://YOUR_IP_ADDRESS:8443/</p>
+<p>Go to My Project and Click on add to project</p>
+<p>Add to project from template and select the previously added rest-service.</p>
+
+<a href="/assets/images/{{page.id}}/addApp.png"> <img
+	class="center-block img-responsive"
+	src="/assets/images/{{page.id}}/addApp.png" /></a>
+<p>The template allows you ton change configurations before creating the different objects on the openshift cluster (i.e. BuildConfig, DeploymentConfig, Services, Routes ..)</p>
+<p>
+The source is cloned from the git repository and built using the Source2Image method.
+	Note that this is a Java project and all dependencies for the maven build needs to be downloaded. If you have an existing nexus or other maven repo you can configure it in the Maven Mirror Url.
+This could accelerate build time.
+</p>
+<a href="/assets/images/{{page.id}}/fillTemplate.png"> <img
+	class="center-block img-responsive"
+	src="/assets/images/{{page.id}}/fillTemplate.png" /></a>
+
+<p>Click on create and wait for the build and deployments to occur.</p>
+
+<a href="/assets/images/{{page.id}}/deployed.png"> <img
+	class="center-block img-responsive"
+	src="/assets/images/{{page.id}}/deployed.png" /></a>
+
+
+<p>Test by calling service.</p>
+<pre>curl http://YOUR_ROUTE_DOMAIN_NAME/svc/person/1</pre>
+<p>Expected result</p>
+{% highlight json %}
+{"id":1,"name":"John Doe"}
+{% endhighlight%}
+
+<p>You can now also access infos about your running pods and access JMX methods and data through the Java Console</p>
+
+<a href="/assets/images/{{page.id}}/podInfo.png"> <img
+	class="center-block img-responsive"
+	src="/assets/images/{{page.id}}/podInfo.png" /></a>
+
+	<a href="/assets/images/{{page.id}}/javaconsole.png"> <img
+		class="center-block img-responsive"
+		src="/assets/images/{{page.id}}/javaconsole.png" /></a>
+
+<p>Thanks for reading</p>
+
+<p><strong>Other resources</strong></p>
+<ul>
+	<li><a href="http://www.schabell.org/2017/02/cloud-happiness-openshift-container-platform-install-updated.html">Cloud Happiness - OpenShift Container Platform v3.4 install demo updated</a></li>
+	<li>Have your own Openshift Container Platform for development : <a href="https://developers.redhat.com/products/cdk/overview/">Red Hat Container Development Kit</a></li>
+</ul>
