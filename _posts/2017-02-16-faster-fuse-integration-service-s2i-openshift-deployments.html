@@ -10,11 +10,11 @@ github: "https://github.com/alainpham/fis20-simple-svc"
 ---
 
 <p>
-Openshift offers a whole pipeline to create container images directly from source code. 
+Openshift offers a whole pipeline to create container images directly from source code.
 It is usable for general purpose Java applications as well as for Fuse Integration Service projects.
 This post will present how to accelerate the build time of those images by setting up a local Nexus Repository and configuring application templates
-to use this repository for the build process. The idea is not having to download from the Internet all the FIS maven dependencies when building a new project. 
-At the time of writing FIS 2.0 is available as tech preview. 
+to use this repository for the build process. The idea is not having to download from the Internet all the FIS maven dependencies when building a new project.
+At the time of writing FIS 2.0 is available as tech preview.
 </p>
 <!--more-->
 
@@ -34,25 +34,25 @@ This will work on FIS 2.0 and also FIS 1.0.
 Setting up a Nexus repository
 </h2>
 <p>The reason why build times can be long with the source S2I pipeline is because each new application build requires to spin up a
-S2I container to launch the maven goals in order to package your application. 
+S2I container to launch the maven goals in order to package your application.
 Building the same application template after the first time is faster because the downloaded artifacts are reused.
 But every time we create a new application, it will go through the same initial downloading process again.
-That is why instead of having the S2I container download everything from Internet repositories each time, 
+That is why instead of having the S2I container download everything from Internet repositories each time,
 we can setup a Nexus server that will proxy these repositories and store already downloaded artifacts locally.
 Here we will show how to setup a local standalone Nexus2 repository
-<p>
+</p>
 
 <a href="/assets/images/{{page.id}}/nexus_s2i.png"> <img
 	class="center-block img-responsive"
-	src="/assets/images/{{page.id}}/nexus_s2i.png" /></a>
+	src="/assets/images/{{page.id}}/nexus_s2i.png" alt="nexus s2i architecture"/></a>
 
 <h3>Download Nexus 2 OSS and run it</h3>
 <p>
-Download the Nexus Repository Manager OSS 2.x package on : 
+Download the Nexus Repository Manager OSS 2.x package on :
 <a href="https://www.sonatype.com/download-oss-sonatype">https://www.sonatype.com/download-oss-sonatype</a>
-</p> 
+</p>
 <p>
-Unzip it and run it : 
+Unzip it and run it :
 </p>
 
 <pre>
@@ -68,27 +68,27 @@ http://localhost:8081/nexus
 <p>
 <a href="/assets/images/{{page.id}}/login_nexus.png"> <img
 	class="center-block img-responsive"
-	src="/assets/images/{{page.id}}/login_nexus.png" /></a>
+	src="/assets/images/{{page.id}}/login_nexus.png" alt="nexus login page"/></a>
 </p>
 <p>
 Click on Repositories and add 3 new proxy repositories
-<ul>
-<li>
-The Red Hat GA repository (jboss-ga-repository) : https://maven.repository.redhat.com/ga/
-</li>
-<li>
-The Red Hat Early Access repository (jboss-ea-repository) : https://maven.repository.redhat.com/earlyaccess/all
-</li>
-<li>
-The Fuse source repo eventually for older versions of Fuse (fuse-source) : https://repo.fusesource.com/nexus/content/groups/public/
-</li>
-</ul> 
+	<ul>
+		<li>
+			The Red Hat GA repository (jboss-ga-repository) : https://maven.repository.redhat.com/ga/
+		</li>
+		<li>
+			The Red Hat Early Access repository (jboss-ea-repository) : https://maven.repository.redhat.com/earlyaccess/all
+		</li>
+		<li>
+			The Fuse source repo eventually for older versions of Fuse (fuse-source) : https://repo.fusesource.com/nexus/content/groups/public/
+		</li>
+	</ul>
 </p>
 
 <p>
 <a href="/assets/images/{{page.id}}/nexus_proxy_repo.png"> <img
 	class="center-block img-responsive"
-	src="/assets/images/{{page.id}}/nexus_proxy_repo.png" /></a>
+	src="/assets/images/{{page.id}}/nexus_proxy_repo.png" alt="setup nexus proxy repos"/></a>
 </p>
 
 <h3>Setup public group for all proxy repositories</h3>
@@ -96,7 +96,7 @@ The Fuse source repo eventually for older versions of Fuse (fuse-source) : https
 <p>
 <a href="/assets/images/{{page.id}}/nexus_public_group.png"> <img
 	class="center-block img-responsive"
-	src="/assets/images/{{page.id}}/nexus_public_group.png" /></a>
+	src="/assets/images/{{page.id}}/nexus_public_group.png" alt="setup nexus public group"/></a>
 </p>
 
 <p>
@@ -108,8 +108,8 @@ Create a Fuse project with the Java Spring Boot archetype for Openshift
 </h2>
 
 <p>
-Now in order to test a deployment let's create a Fuse project. Before we begin make sure that you have these prerequisites 
-on your developer machine : 
+Now in order to test a deployment let's create a Fuse project. Before we begin make sure that you have these prerequisites
+on your developer machine :
 <ul>
 <li>JDK 1.7+ installed</li>
 <li>Maven installed</li>
@@ -137,8 +137,8 @@ Make sure to configure your maven settings.xml file and add the Red Hat GA and E
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
-    </repository> 
-    
+    </repository>
+
 	<!-- Global Availability RH-->
       <repository>
       <id>jboss-ga-repository</id>
@@ -151,8 +151,8 @@ Make sure to configure your maven settings.xml file and add the Red Hat GA and E
         <enabled>false</enabled>
       </snapshots>
     </repository>
-    
-    <!-- Fuse Source GA--> 
+
+    <!-- Fuse Source GA-->
     <repository>
       <id>fuse-source</id>
       <releases>
@@ -166,8 +166,8 @@ Make sure to configure your maven settings.xml file and add the Red Hat GA and E
       <url>http://repo.fusesource.com/nexus/content/repositories/releases</url>
     </repository>
   </repositories>
-  
-  
+
+
   <pluginRepositories>
 	<!-- EARLY ACCESS RH-->
 	<pluginRepository>
@@ -180,8 +180,8 @@ Make sure to configure your maven settings.xml file and add the Red Hat GA and E
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
-    </pluginRepository> 
-	  
+    </pluginRepository>
+
 	<!-- Global Availability RH-->
     <pluginRepository>
        <id>jboss-ga-plugin-repository</id>
@@ -194,8 +194,8 @@ Make sure to configure your maven settings.xml file and add the Red Hat GA and E
         <enabled>false</enabled>
       </snapshots>
     </pluginRepository>
-    
-    <!-- Fuse Source GA--> 
+
+    <!-- Fuse Source GA-->
     <pluginRepository>
       <id>fusesource-plugin</id>
       <releases>
@@ -269,7 +269,7 @@ Add these dependencies to the pom.xml file in order to create a JSON Rest Webser
 </camelContext>
 {% endhighlight %}
 
-<p>To avoid a tcp port conflict with the default Nexus port (8081), make sure to change the parameter "management.port" in 
+<p>To avoid a tcp port conflict with the default Nexus port (8081), make sure to change the parameter "management.port" in
 the resources/application.properties file. You can change it to 8086 for example.</p>
 
 <p>Run the project locally to see if everything is fine. Go to the root folder of your project.</p>
@@ -282,7 +282,7 @@ the resources/application.properties file. You can change it to 8086 for example
 Create a settings.xml file
 </h3>
 
-<p>At the root of your project copy your current maven settings.xml file 
+<p>At the root of your project copy your current maven settings.xml file
 (the one with all the repositories defined) and add a mirror bloc as follows.
 This will be used later by Openshift S2I. It there to configure Maven to get artifacts from your local Nexus repository.</p>
 
@@ -317,7 +317,7 @@ the S2I takes into account the Nexus repository for the Maven build.</p>
 wget https://raw.githubusercontent.com/jboss-fuse/application-templates/application-templates-2.0.redhat-000026/quickstarts/springboot-camel-template.json
 </pre>
 
-<p>The important parameters to change in the template are the following. 
+<p>The important parameters to change in the template are the following.
 </p>
 {% highlight yml %}
 - name: APP_NAME
@@ -345,7 +345,7 @@ wget https://raw.githubusercontent.com/jboss-fuse/application-templates/applicat
 {% endhighlight %}
 
 <p>The most important change is the following MAVEN_ARGS parameter. It is where we point to the Nexus repo we created and where we use
-the settings.xml file at to root of the project. 
+the settings.xml file at to root of the project.
 Note that the IP address here 172.17.0.1 is the one that belongs to the host machine bound to the docker network interface. Adapt
 it to your situation if necessary.</p>
 
@@ -393,7 +393,7 @@ sourceStrategy:
   kind: Service
   metadata:
     name: "${APP_NAME}"
-    creationTimestamp: 
+    creationTimestamp:
     labels:
       component: "${APP_NAME}"
       group: quickstarts
@@ -417,12 +417,12 @@ sourceStrategy:
     type: ClusterIP
   status:
     loadBalancer: {}
-    
+
 - apiVersion: v1
   kind: Route
   metadata:
     name: "${APP_NAME}"
-    creationTimestamp: 
+    creationTimestamp:
     labels:
       component: "${APP_NAME}"
       group: quickstarts
@@ -455,7 +455,7 @@ oc create oc new-app springboot-rest
 
 <a href="/assets/images/{{page.id}}/faster_build.png"> <img
 	class="center-block img-responsive"
-	src="/assets/images/{{page.id}}/faster_build.png" /></a>
+	src="/assets/images/{{page.id}}/faster_build.png" alt="openshift s2i faster build times"/></a>
 
 <p>Test your service at the following url</p>
 <pre>
@@ -468,7 +468,7 @@ taken from the local Nexus instead of being downloaded from the Internet.</p>
 
 
 <strong>
-Other resources : 
+Other resources :
 </strong>
 <ul>
 <li>Video tutorial showing the source S2I method for FIS 2.0 : <a href="https://vimeo.com/194416659">https://vimeo.com/194416659</a></li>
@@ -476,4 +476,3 @@ Other resources :
 <li>Tutorial with binary S2I method (fabric8 plugin) : <a href="https://developers.redhat.com/blog/2017/01/17/getting-started-with-fuse-integration-service-2-0-tech-preview/">Getting Started with Fuse Integration Service 2.0 Tech preview</a></li>
 <li>(update 22/02/2017)Official FIS 2.0 GA documentation : <a href="https://access.redhat.com/documentation/en-us/red_hat_jboss_middleware_for_openshift/3/html-single/red_hat_jboss_fuse_integration_services_2.0_for_openshift/">https://access.redhat.com/documentation/en-us/red_hat_jboss_middleware_for_openshift/3/html-single/red_hat_jboss_fuse_integration_services_2.0_for_openshift/</a></li>
 </ul>
-
