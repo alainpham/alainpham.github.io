@@ -20,7 +20,7 @@ github: "https://github.com/alainpham/rest-service"
 	surprised how easy it is to create standalone packages that are capable
 	of running production grade services.</p>
 
-<p>Source code for this can be found here : 
+<p>Source code for this can be found here :
 <a href="https://github.com/alainpham/rest-service">https://github.com/alainpham/rest-service</a>
 </p>
 <p>These are the steps of this tutorial</p>
@@ -50,19 +50,19 @@ github: "https://github.com/alainpham/rest-service"
 
 <a href="/assets/images/{{page.id}}/create-new-maven-project.png"> <img
 	class="center-block img-responsive"
-	src="/assets/images/{{page.id}}/create-new-maven-project.png" /></a>
+	src="/assets/images/{{page.id}}/create-new-maven-project.png" alt="create new maven project"/></a>
 
 <p>Chose simple project to have an empty pom.xml file</p>
 
 <a href="/assets/images/{{page.id}}/choose-simple-project.png"> <img
 	class="center-block img-responsive"
-	src="/assets/images/{{page.id}}/choose-simple-project.png" /></a>
+	src="/assets/images/{{page.id}}/choose-simple-project.png" alt="choose simple project in eclipse"/></a>
 
 <p>Fill in the project details</p>
 
 <a href="/assets/images/{{page.id}}/fill-project-infos.png"> <img
 	class="center-block img-responsive"
-	src="/assets/images/{{page.id}}/fill-project-infos.png" /></a>
+	src="/assets/images/{{page.id}}/fill-project-infos.png" alt="fill project infos"/></a>
 
 <h2>Edit the pom.xml file</h2>
 
@@ -138,8 +138,8 @@ public class Person {
 
 	private Long id;
 	private String name;
-	
-	
+
+
 	public Long getId() {
 		return id;
 	}
@@ -152,8 +152,8 @@ public class Person {
 	public void setName(String name) {
 		this.name = name;
 	}
-	
-	
+
+
 }
 {% endhighlight %}
 
@@ -173,21 +173,21 @@ import com.app.model.Person;
 public class PersonService {
 
 	Map<Long, Person> personMap;
-	
+
 	public PersonService() {
 		super();
 		personMap = new HashMap< Long, Person>();
-		
-		
+
+
 		Person p1 = new Person();
 		p1.setId(1l);
 		p1.setName("John Doe");
-		
-		
+
+
 		Person p2 = new Person();
 		p2.setId(2l);
 		p2.setName("Jane Smith");
-		
+
 		personMap.put(p1.getId(), p1);
 		personMap.put(p2.getId(), p2);
 	}
@@ -220,9 +220,8 @@ http://localhost:8080/svc/person/1
 
 <a href="/assets/images/{{page.id}}/consume.png"> <img
 	class="center-block img-responsive"
-	src="/assets/images/{{page.id}}/consume.png" /></a>
+	src="/assets/images/{{page.id}}/consume.png" alt="test rest service by consuming"/></a>
 
 <p>The next post will be about how to deploy such microservices packaged in Docker containers on Openshift</p>
 
 <p>Thanks for reading !</p>
-

@@ -9,9 +9,9 @@ tags: [jboss-fuse, ansible, automation, integration, ha, scalability]
 github: "https://github.com/alainpham/ansible-role-jboss-fuse-amq-ha"
 ---
 
-<p>Most integration/service platform projects start small but 
+<p>Most integration/service platform projects start small but
 need to ensure high availability requirements and be scalable to handle growing workloads.
-This article shows how to use Ansible to automatically provision servers with JBoss Fuse and JBoss ActiveMQ instances 
+This article shows how to use Ansible to automatically provision servers with JBoss Fuse and JBoss ActiveMQ instances
 to get a highly available service and messaging platform.
 </p>
 <!--more-->
@@ -21,25 +21,25 @@ Minimal Highly Available Architecture
 </h2>
 
 <p>
-What does a new born reliable Integration Platform look like? 
-It needs at least 4 machines and a shared storage (NFSV4 or GFS2) as described in the following paragraphs. 
+What does a new born reliable Integration Platform look like?
+It needs at least 4 machines and a shared storage (NFSV4 or GFS2) as described in the following paragraphs.
 </p>
 
 
 <a href="/assets/images/{{page.id}}/minimal-fuse-amq-ha.png"> <img
 	class="center-block img-responsive"
-	src="/assets/images/{{page.id}}/minimal-fuse-amq-ha.png" /></a>
+	src="/assets/images/{{page.id}}/minimal-fuse-amq-ha.png" alt="minimal high availability Fuse Amq architecture"/></a>
 
 
 <h3>
-  Two machines with JBoss Fuse 
+  Two machines with JBoss Fuse
 </h3>
 Here we will run 2 active instances of JBoss Fuse.
 We will deploy our services on both machines to get high availablity and also load balancing.
 <h3>
   Two machines with JBoss A-MQ
 </h3>
-  <p>Here we will run 2 couples of failover configured A-MQ instances. 
+  <p>Here we will run 2 couples of failover configured A-MQ instances.
   We link them together in a network of brokers.
   In the nominal case, A-MQ A instance should be active on one machine and A-MQ B instance should be active on the other machine.
   Their failover instances are placed symmetrically on the other machine.
@@ -49,17 +49,17 @@ We will deploy our services on both machines to get high availablity and also lo
   </p>
 <ul>
  <li>The messaging load is distributed on both machines thus giving a better resource utilization than just having a unique failover configuration</li>
- <li>Shorter downtime when one machine fails can be achieved. 
- 
- The failover mechanism takes time to perform since it needs to detect that the lock on 
- the store has been released. Disconnected clients can reconnect immediately to the other active instance in the network and render service while 
+ <li>Shorter downtime when one machine fails can be achieved.
+
+ The failover mechanism takes time to perform since it needs to detect that the lock on
+ the store has been released. Disconnected clients can reconnect immediately to the other active instance in the network and render service while
  the failover instance resumes pending messages of the crashed instance.
  </li>
 </ul>
 
 <p>
-One might argue that dedicating machines to A-MQ is an overkill at the beginning. Why not just put them also on 
-the same machines as the JBoss Fuse engines? 
+One might argue that dedicating machines to A-MQ is an overkill at the beginning. Why not just put them also on
+the same machines as the JBoss Fuse engines?
 Well that can be true if messaging is not that highly demanding in our use cases, but limitations will appear quickly when
 trying to scale the messaging infrastructure once the platform grows. In fact we would like to be able to scale your messaging
 infrastructure independently from the application services hosted on JBoss Fuse instances. In other words, if we do not allocate resources to
@@ -72,7 +72,7 @@ Create an Ansible Role for automation
 
 <p>
 Ansible is a powerful tool to automate IT infrastructure provisioning, application deployment, configuration management and continuous delivery.
-It is an agentless system meaning that we do not have to install anything on the target machines. 
+It is an agentless system meaning that we do not have to install anything on the target machines.
 The only thing that is needed is a standard ssh access.
 </p>
 
@@ -99,7 +99,7 @@ To get the cluster up and running in little time, I have created an Ansible role
 	<a href="https://github.com/alainpham/ansible-role-jboss-fuse-amq-ha">
 	https://github.com/alainpham/ansible-role-jboss-fuse-amq-ha
 	</a>
-</p> 
+</p>
 <p>
 Below are the default variables to run the role.
 </p>
@@ -121,7 +121,7 @@ temp_folder: /home/user/tmp/
 #Fuse or A-MQ package to be installed with version
 artifact: jboss-fuse-karaf-6.3.0.redhat-187.zip
 
-#folder on target host 
+#folder on target host
 target_package_folder: /home/user/fuse
 
 karaf_ssh_port: 8101
@@ -130,15 +130,15 @@ rmi_server_port: 44444
 rmi_registry_port: 1099
 
 #setup default users
-users: 
-  - 
+users:
+  -
     password: admin
-    roles: 
+    roles:
       - admin
     username: admin
-  - 
+  -
     password: guest
-    roles: 
+    roles:
       - viewer
     username: guest
 
@@ -162,7 +162,7 @@ networked_hosts:
 {% endhighlight %}
 <p>
 In order to run it, we must create a playbook and redefine those variables for Fuse machines and each A-MQ host.
-You can find an example play book in the test folder. 
+You can find an example play book in the test folder.
 </p>
 
 <pre>
@@ -175,8 +175,8 @@ You can find an example play book in the test folder.
 │   ├── all.yml            -> all the default variables
 │   ├── amq.yml            -> all defaults related to A-MQ machines
 │   └── fuse.yml           -> all defailts related to Fuse machines
-├── host_vars              -> specific configuration to hosts. 
-│   ├── amq-a-master.yml   
+├── host_vars              -> specific configuration to hosts.
+│   ├── amq-a-master.yml
 │   ├── amq-a-slave.yml
 │   ├── amq-b-master.yml
 │   └── amq-b-slave.yml
@@ -205,7 +205,7 @@ Scalable Network of Active MQ brokers for handing massive connections
 <p>
 If you need your integration platform to grow larger and be highly elastic, consider using PaaS solutions such as
 Openshift. I would say that as a general rule of thumb if you exceed 5 machines in your integration cluster,
-it can already be interesting to consider the Openshift iPaaS approach.  
+it can already be interesting to consider the Openshift iPaaS approach.
 </p>
 
 
@@ -215,7 +215,5 @@ What next?
 <p>You can learn the basics about Ansible go to <a href="https://www.ansible.com/get-started">https://www.ansible.com/get-started</a>.
 <br>
 At some point you might want to scale down your integration platform, you can go ahead and make an Ansible role to automate down scaling.
-Furthermore you could write Ansible scripts to automate application deployments to Fuse containers. 
-</p> 
-
-
+Furthermore you could write Ansible scripts to automate application deployments to Fuse containers.
+</p>
