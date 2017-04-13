@@ -1,23 +1,23 @@
 <head>
-  <meta charset="utf-8"></meta> 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" ></meta>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" >
   <link rel="shortcut icon" type="image/png" href="/icon.png" />
-  
+
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@koint">
   <meta name="twitter:creator" content="@koint">
-  
+
   <!-- SEO stuff -->
   <title>{{page.title}}</title>
   <meta property="og:title" content="{{page.title}}" />
   <meta name="twitter:title" content="{{page.title}}">
-  
+
 
   {% if page.description %}
 	  <meta name="description" content="{{page.description}}" />
 	  <meta property="og:description" content="{{page.description}}" />
 	  <meta name="twitter:description" content="{{page.description}}">
-	  
+
   {% else %}
 	  <meta name="description" content="{{page.excerpt | strip_html}}" />
 	  <meta property="og:description" content="{{page.excerpt | strip_html}}" />
@@ -26,24 +26,24 @@
   <link rel="canonical" href="{{site.url}}{{page.url}}" />
   <meta property="og:url" content="{{site.url}}{{page.url}}" />
   <meta name="twitter:url" content="{{site.url}}{{page.url}}">
-  
+
   <meta property="og:site_name" content="{{site.name}}" />
   <meta property="og:image" content="{{site.url}}/assets/images/{{page.id}}/top.jpg" />
   <meta name="twitter:image" content="{{site.url}}/assets/images/{{page.id}}/top.jpg">
-  
+
   {% if page.id %} <!-- if it's an article -->
   <meta property="og:type" content="article" />
   <meta property="article:published_time" content="{{ page.published | date_to_xmlschema }}" />
   <meta property="article:modified_time" content="{{ page.date | date_to_xmlschema }}" />
-  
+
   <meta content="{{site.author}}" property="article:author">
-  
+
   {% if page.categories %}
 	  {% for category in page.categories limit:1 %}
 	  <meta content="{{ category }}" property="article:section">
 	  {% endfor %}
   {% endif %}
-  
+
   {% if page.tags %}
 	  {% for tag in page.tags %}
 	  <meta content="{{ tag }}" property="article:tag">
@@ -61,10 +61,10 @@
 "description": "{{page.excerpt | strip_html}}",
   {% endif %}
 "url": "{{site.url}}{{page.url}}"}</script>
-   
+
   {% else %} <!-- its not an article -->
   	<meta property="og:type" content="website" />
-  	
+
   	    <script type="application/ld+json">
 {"@context": "http://schema.org",
 "@type": "WebSite",
@@ -75,18 +75,18 @@
 "description": "{{page.excerpt | strip_html}}",
   {% endif %}
 "url": "{{site.url}}{{page.url}}"}</script>
-  {% endif %} 
-  
+  {% endif %}
+
   <link rel="author" href="{{site.author}}"/>
 
    <!-- End SEO stuff -->
-   
+
   <link rel="stylesheet" href="/assets/css/bootstrap.min.css" />
   <link rel="stylesheet" href="/assets/css/font-awesome/css/font-awesome.min.css" />
   <link rel="stylesheet" href="/assets/css/main.css" />
    <link href="/assets/css/syntax.css" rel="stylesheet">
-  
+
   <script src="/assets/js/jquery.min.js"></script>
   <script src="/assets/js/bootstrap.min.js"></script>
-  
+
 </head>
