@@ -35,3 +35,5 @@ include: ["_pages"]
 permalink: /posts/:title/
 excerpt_separator: <!--more-->
 author: https://www.linkedin.com/in/alainpham
+
+host: 0.0.0.0

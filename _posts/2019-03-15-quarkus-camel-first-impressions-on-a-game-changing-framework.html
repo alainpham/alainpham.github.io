@@ -1,0 +1,412 @@
+---
+layout: default
+title: "Quarkus Camel, First Impressions on a Game Changing Framework"
+date: 2019-03-15 01:00:00 +0200
+published: 2019-03-19 01:00:00 +0200
+comments: true
+categories: development
+tags: [quarkus, kubernetes, camel]
+github: "https://github.com/alainpham/rest-service"
+---
+
+<p>
+    On March 07, 2019 Red Hat & the JBoss Community announced Quarkus. It is a Java framework that enables ultra low
+    boot
+    times and tiny
+    memory footprint for applications and services. It does that by taking advantage of GraalVM's native compilation
+    capabilities to produce an executable out of your Java code. Why is this considered to be a game
+    changer ?
+    In this article I will give my view and first impressions on this framework as someone who spends
+    a bit of time writing applications and services. I will get my hands dirty by building a
+    working Quarkus + Apache Camel example.
+</p>
+<!--more-->
+
+<h2>What's the big deal about Quarkus?</h2>
+
+<p>When Quarkus was announced 1 week ago, many have commented that this is a game changer for the future of
+    Java Application
+    Development. I must say that I have rarely been so excited about a project as I am right now for Quarkus !
+    So what's the big deal here ?
+</p>
+
+<p> The official website quarkus.io states that Quarkus can be qualified as "Supersonic Subatomic Java". It is a "A
+    Kubernetes Native Java stack tailored for GraalVM & OpenJDK HotSpot, crafted from the best of breed Java libraries
+    and standards".
+</p>
+
+<h3>The existing Java ecosystem</h3>
+<p>
+    To understand the huge value that Quarkus brings, we have to take a step back and get in the shoes of a typical
+    Enterprise Dev Team.
+    Java has been so broadly adopted that it has become the default technology for application
+    development in
+    many organizations.
+    Throughout the years a huge ecosystem of tools and libraries flourished around Java to solve all kinds
+    of challenges and problems.
+</p>
+
+<h3>The adoption of containers combined with Java</h3>
+
+<p>
+    The recent adoption of Containers and Kubernetes has lead to a wave of
+    innovation around workload orchestration and scheduling.
+    Still, organizations wanted to keep leveraging the expertise around Java their developers have acquired.
+    It became a natural practice to put Java applications and micro services into containers to get the best of both
+    worlds. Organizations wanted a rich ecosystem
+    of libraries and all the innovations around container orchestration at the same time.
+</p>
+
+<p>
+<a href="/assets/images/{{page.id}}/os-container-jvm-app-stack.svg"> <img
+	class="center-block img-responsive"
+	src="/assets/images/{{page.id}}/os-container-jvm-app-stack.svg" alt="os container jvm app stack"/></a>
+
+</p>
+<h3>The paradigm shift needed for Java to exist in the world of Containers</h3>
+
+
+<p>
+    When a micro service needs to be scaled up and down quickly is when Java shows some weakness.
+    In fact Java has not been designed for being a short lived process that might be scheduled anywhere on a
+    distributed infrastructure.
+    It has rather been designed and optimized to run application servers for a long time and taking up all the
+    resources
+    available on a VM or a bare metal server.
+    The boot time was not such a critical constraint. In usual Java application the boot time of 4 to 10 seconds
+    (and even more) was
+    entirely acceptable. The initial memory footprint is usually also negligible due to the fact that a large amount of memory 
+    would be dedicated to the application server anyway.
+</p>
+
+<p>
+    The paradigm has shifted in the world of containers and Kubernetes. The boot time has become highly critical. A low boot time 
+    is what would allow a service to scale up and down quickly and achieve higher
+    workload density on cloud infrastructures. A minimal initial memory footprint per instance is what would
+    allow the service to start small and be scaled efficiently when needed.
+    In the extreme case, when considering the rise of Functions as a Service booting up quickly becomes even more critical. 
+    In this case we aim at scaling the service down to zero instances when there are no requests and starting
+    it only when client requests are coming in.
+    We can see here that the boot time needs to be several orders of magnitude lower than what we are used to.
+</p>
+
+<p>
+    <a href="/assets/images/{{page.id}}/scaling-up.svg"> <img
+        class="center-block img-responsive"
+        src="/assets/images/{{page.id}}/scaling-up.svg" alt="scaling up from 0"/></a>
+    </p>
+
+<h3>Quarkus to the rescue</h3>
+<p>
+    Given this context, we can now better understand the value that Quarkus brings.
+    In short, it's a framework that enables dev teams to use widely adopted Java libraries to build applications that
+    have an extreme low boot time and low initial memory footprint.
+    Quarkus takes advantage of GraalVM to compile java projects into a native executable that can just run.
+</p>
+
+<h2>Get started : build a hello world</h2>
+<p>Now lets go ahead and build our first hello world to see how it performs.</p>
+<h3>
+    Create a simple project using the quarkus-maven-plugin
+</h3>
+
+{% highlight shell %}
+mvn io.quarkus:quarkus-maven-plugin:0.11.0:create \
+-DprojectGroupId=techlab \
+-DprojectArtifactId=quarkus-hello-world \
+-DclassName="techlab.GreetingResource" \
+-Dpath="/hello"
+{% endhighlight %}
+
+<p>
+    This is the structure of the project :
+</p>
+
+{% highlight shell %}
+|-- pom.xml
+|-- quarkus.log
+|-- src
+| |-- main
+| | |-- docker
+| | | `-- Dockerfile
+| | |-- java
+| | | `-- techlab
+| | | `-- GreetingResource.java
+| | `-- resources
+| | `-- META-INF
+| | |-- microprofile-config.properties
+| | `-- resources
+| | `-- index.html
+{% endhighlight %}
+
+<p>
+    The dependencies are pretty minimalist and clean since most of it is taken care of by the quarkus bom and plugins.
+</p>
+
+{% highlight xml %}
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-bom</artifactId>
+        <version>${quarkus.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+....
+<dependency>
+    <groupId>io.quarkus</groupId>
+    <artifactId>quarkus-resteasy</artifactId>
+</dependency>
+<dependency>
+    <groupId>io.quarkus</groupId>
+    <artifactId>quarkus-arc</artifactId>
+</dependency>
+...
+<build>
+    <plugins>
+        <plugin>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-maven-plugin</artifactId>
+            <version>${quarkus.version}</version>
+...
+{% endhighlight %}
+
+
+<p>
+    The plugin creates a simple project with a rest service operation returning hello as you can see in the file
+    GreetingResource.java.
+    It is pretty much the only thing that needs to be done here to have a running service. Quarkus is rather an
+    opinionated framework that aims at accelerating development using configuration files and annotations.
+</p>
+
+{% highlight java %}
+package techlab;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+
+@Path("/hello")
+public class GreetingResource {
+
+@GET
+@Produces(MediaType.TEXT_PLAIN)
+public String hello() {
+    return "hello";
+    }
+}
+{% endhighlight %}
+
+<h3>Let's run and test the project</h3>
+
+<p>
+    Now lets go ahead and run this project to see how fast it actually boots up.
+</p>
+
+{% highlight shell %}
+mvn compile quarkus:dev
+{% endhighlight %}
+
+
+{% highlight shell %}
+[apham@aplinux quarkus-hello-world]$ mvn compile quarkus:dev
+[INFO] Scanning for projects...
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] Building quarkus-hello-world 1.0-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO]
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ quarkus-hello-world ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 2 resources
+[INFO]
+[INFO] --- maven-compiler-plugin:3.1:compile (default-compile) @ quarkus-hello-world ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO]
+[INFO] --- quarkus-maven-plugin:0.11.0:dev (default-cli) @ quarkus-hello-world ---
+[INFO] Using servlet resources /home/workdrive/TAZONE/WORKSPACES/ws-quarkus/quarkus-hello-world/src/main/resources/META-INF/resources
+Listening for transport dt_socket at address: 5005
+2019-03-17 23:10:29,640 INFO  [io.qua.dep.QuarkusAugmentor] (main) Beginning quarkus augmentation
+2019-03-17 23:10:29,980 INFO  [io.qua.dep.QuarkusAugmentor] (main) Quarkus augmentation completed in 340ms
+2019-03-17 23:10:30,155 INFO  [io.quarkus] (main) Quarkus 0.11.0 started in 0.602s. Listening on: http://127.0.0.1:8080
+2019-03-17 23:10:30,156 INFO  [io.quarkus] (main) Installed features: [cdi, resteasy]
+{% endhighlight %}
+
+<p>
+    We should bare in mind that here we are using the OpenJDK HotSpot and are not yet compiling our project to a native executable.
+    The results are already pretty remarkable as I could observe a boot time of 60.2 milliseconds.
+</p>
+
+<h3>
+    Compile to native executable and run
+</h3>
+
+<p>
+    In order to compile the project we need to setup GraalVM. 
+    Download the VM from the following website <a href="http://www.graalvm.org/downloads/">http://www.graalvm.org/downloads/</a>.
+    Extract the package somewhere and set the env variable GRAALVM_HOME to point to the root of its folder.
+</p>
+<p>
+    Now we can run the following command to build a native executable.
+</p>
+
+{% highlight shell %}
+mvn package -Pnative
+{% endhighlight %}
+
+<p>
+    We run the native executable with the following command.
+</p>
+
+{% highlight shell %}
+./target/quarkus-hello-world-1.0-SNAPSHOT-runner
+{% endhighlight %}
+
+{% highlight shell %}
+[apham@aplinux quarkus-hello-world]$ ./target/quarkus-hello-world-1.0-SNAPSHOT-runner
+2019-03-17 23:34:04,690 INFO [io.quarkus] (main) Quarkus 0.11.0 started in 0.004s. Listening on: http://127.0.0.1:8080
+2019-03-17 23:34:04,691 INFO [io.quarkus] (main) Installed features: [cdi, resteasy]
+{% endhighlight %}
+
+<p>
+    We can observe here that the boot time is enhanced by a significant order of magnitude which is just a fraction of a millisecond. 
+    To be precise 0.4 milliseconds. This is simply an incredible result.
+</p>
+
+<h2>Enhanced Developer Experience</h2>
+<p>
+    Now the good surprises don't end there. Since the boot times are so good, it also solve a big challenge for development workflow. 
+    In fact, Quarkus also implements a livereload mechanism to reflect the changes performed on the code instantaneously.
+    Try to change some of the code in the project, hit Ctrl+s and we can observe how fast the service reloads to take the changes into account.
+    This is a big leap for developer productivity. As we can see here it took only 38.6 milliseconds to reload.
+</p>
+{% highlight shell %}
+2019-03-18 09:59:58,988 INFO  [io.qua.dev] (XNIO-1 task-1) Changes source files detected, recompiling [/home/workdrive/TAZONE/WORKSPACES/ws-quarkus/quarkus-camel-first-impressions/src/main/java/techlab/GreetingResource.java]
+2019-03-18 09:59:59,274 INFO  [io.quarkus] (XNIO-1 task-1) Quarkus stopped in 0.001s
+2019-03-18 09:59:59,275 INFO  [io.qua.dep.QuarkusAugmentor] (XNIO-1 task-1) Beginning quarkus augmentation
+2019-03-18 09:59:59,366 INFO  [io.qua.dep.QuarkusAugmentor] (XNIO-1 task-1) Quarkus augmentation completed in 91ms
+2019-03-18 09:59:59,373 INFO  [io.quarkus] (XNIO-1 task-1) Quarkus 0.11.0 started in 0.098s. Listening on: http://127.0.0.1:8080
+2019-03-18 09:59:59,373 INFO  [io.quarkus] (XNIO-1 task-1) Installed features: [cdi, resteasy]
+2019-03-18 09:59:59,373 INFO  [io.qua.dev] (XNIO-1 task-1) Hot replace total time: 0.386s
+{% endhighlight %}
+
+<h2>Let's add Camel to the mix</h2>
+<p>Now that we have our hello world running. Let's try to add Camel to the mix to enable reusable integration patterns
+    and connectors in our projects. Quarkus already offers a variety extensions and Camel is one of those. At the time of writing 
+    there are just a few extensions available. We won't get the whole set of 200+ Camel components compiled to native executable packages, 
+    but I'm quite sure that the Quarkus ecosystem will grow quickly.
+</p>
+
+<p>
+    Let's list the available extensions.
+</p>
+
+<pre>mvn quarkus:list-extensions</pre>
+<p>
+    Then let's add the camel extension to it.
+</p>
+<pre>mvn quarkus:add-extension -Dextensions=io.quarkus:quarkus-camel-core</pre>
+
+<p>
+    As a result you should see the dependency to the quarkus camel extension being added to the pom file
+</p>
+
+{% highlight xml %}
+<dependency>
+    <groupId>io.quarkus</groupId>
+    <artifactId>quarkus-camel-core</artifactId>
+</dependency>
+{% endhighlight %}
+
+<p>
+    Lets create a simple class containing a Camel route to see if things work. Add a new class called CamelRouteBuilder to the source folder.
+    With the following content.
+</p>
+
+{% highlight java %}
+package techlab;
+
+import org.apache.camel.builder.RouteBuilder;
+
+public class CamelRouteBuilder extends RouteBuilder {
+
+    public void configure() {
+        from("timer://testTimer").log("test");
+    }
+}
+{% endhighlight %}
+
+<p>At the time of writing there is no documentation on how to get started with camel in Quarkus. 
+    I found an error just trying to run this class complaining about properties not being available.</p>
+
+<pre>Property with key [camel.defer] not found</pre>
+
+<p>Searching through the source code I found that it is looking some properties in the application.properties file.
+    The one file of interest can be found <a href="https://github.com/quarkusio/quarkus/blob/0.11.0/extensions/camel/camel-core/runtime/src/main/java/io/quarkus/camel/core/runtime/CamelRuntime.java">here </a>
+</p>
+<p>
+    So lets go ahead and create a file named application.properties in the folder src/main/resources with the following content
+</p>
+
+<pre>
+camel.defer=false
+camel.conf=
+camel.confd=
+camel.routesUri=
+camel.dump=false
+</pre>
+
+<p>Now we can run our project with <pre>mvn compile quarkus:dev</pre></p>
+
+{% highlight java %}
+2019-03-18 10:43:27,702 INFO  [io.qua.cam.cor.run.FastCamelContext] (main) Route: route1 started and consuming from: timer://testTimer
+2019-03-18 10:43:27,771 INFO  [io.quarkus] (main) Quarkus 0.11.0 started in 1.509s. Listening on: http://127.0.0.1:8080
+2019-03-18 10:43:27,771 INFO  [io.quarkus] (main) Installed features: [camel-core, cdi, resteasy]
+2019-03-18 10:43:28,720 INFO  [route1] (Camel (camel-1) thread #1 - timer://testTimer) test
+2019-03-18 10:43:29,703 INFO  [route1] (Camel (camel-1) thread #1 - timer://testTimer) test
+{% endhighlight %}
+<p>
+    We can note that the boot time is a bit higher when including camel, it is now 1.509s.
+</p>
+
+<p>Let's compile it to a native executable and see how it behaves.</p>
+
+<pre> 
+mvn package -Pnative
+/target/quarkus-camel-first-impressions-1.0-SNAPSHOT-runner
+</pre>
+
+{% highlight shell %}
+2019-03-18 11:05:57,835 INFO  [io.qua.cam.cor.run.FastCamelContext] (main) Route: route1 started and consuming from: timer://testTimer
+2019-03-18 11:05:57,838 INFO  [io.quarkus] (main) Quarkus 0.11.0 started in 0.007s. Listening on: http://127.0.0.1:8080
+2019-03-18 11:05:57,838 INFO  [io.quarkus] (main) Installed features: [camel-core, cdi, resteasy]
+2019-03-18 11:05:58,835 INFO  [route1] (Camel (camel-1) thread #0 - timer://testTimer) test
+{% endhighlight %}
+
+<p>We can see that the boot time is a fraction of a millisecond, 0.7 milliseconds which is absolutely amazing!</p>
+
+<h2>
+    In summary, why is Quarkus so amazing ?
+</h2>
+
+<ul>
+    <li>Lower boot times with significant orders of magnitude.</li>
+    <li>Puts Java Applications back into the game for efficient scale up in Cloud environments</li>
+    <li>Puts Java Applications back into the game for Functions as a Service, being able to scale down to zero and boot
+        up only when required</li>
+    <li>Amazing Developer experience and productivity through fast "Live Reload" capabilities</li>
+</ul>
+
+<p><strong>Other resources</strong></p>
+<ul>
+    <li>
+        <a href="https://quarkus.io/guides/">Quarkus guides</a>
+    </li>
+    <li><a href="https://developers.redhat.com/blog/2019/03/07/quarkus-next-generation-kubernetes-native-java-framework/">Introducing
+            Quarkus: a next-generation Kubernetes native Java framework</a></li>
+    <li><a href="http://in.relation.to/2019/03/08/why-quarkus/">Why Quarkus, blog article by Emmanuel Bernard</a></li>
+</ul>
