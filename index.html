@@ -9,8 +9,8 @@ comments: true
 	<div class="list-group-item">
 	<a href="{{ post.url }}">
 		<h4 class="list-group-item-heading">{{ post.title }}</h4>
-		<h6 class="list-group-item-heading">{{ post.date | date: '%B %d,
-			%Y' }}</h6></a>
+		<h6 class="list-group-item-heading">{{ post.published | date: '%B %d,
+			%Y' }} | (Last Update : {{ post.date | date: '%B %d, %Y' }})</h6></a>
 		{% for tag in post.tags %}
 		<a class="label label-default" href="/tags/#{{ tag | slugify }}">{{ tag }}</a>
 		{% endfor %}

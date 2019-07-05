@@ -1,8 +1,8 @@
 ---
 layout: default
 title: "Quarkus Camel, First Impressions on a Game Changing Framework"
-date: 2019-03-19 01:00:00 +0200
-published: 2019-03-19 01:00:00 +0200
+date: 2019-07-04 01:00:00 +0200
+published: 2019-03-15 01:00:00 +0200
 comments: true
 categories: development
 tags: [quarkus, kubernetes, camel]
@@ -342,12 +342,14 @@ public class CamelRouteBuilder extends RouteBuilder {
 
 <p>At the time of writing there is no documentation on how to get started with camel in Quarkus. 
     I found an error just trying to run this class complaining about properties not being available.</p>
-
 <pre>Property with key [camel.defer] not found</pre>
 
 <p>Searching through the source code I found that it is looking some properties in the application.properties file.
     The one file of interest can be found <a href="https://github.com/quarkusio/quarkus/blob/0.11.0/extensions/camel/camel-core/runtime/src/main/java/io/quarkus/camel/core/runtime/CamelRuntime.java">here </a>
 </p>
+
+<p><strong>Update July 4, 2019 : As of today, version 0.18 is out now the camel core plugin has changed and does not require to add those properties anymore</strong><p>
+
 <p>
     So lets go ahead and create a file named application.properties in the folder src/main/resources with the following content
 </p>
@@ -410,3 +412,4 @@ mvn package -Pnative
             Quarkus: a next-generation Kubernetes native Java framework</a></li>
     <li><a href="http://in.relation.to/2019/03/08/why-quarkus/">Why Quarkus, blog article by Emmanuel Bernard</a></li>
 </ul>
+
