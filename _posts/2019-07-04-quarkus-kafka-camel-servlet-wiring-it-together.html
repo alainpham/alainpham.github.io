@@ -1,7 +1,7 @@
 ---
 layout: default
 title: "Quarkus, Kafka, Camel Servlet, Wiring it Together"
-date: 2019-07-04 05:00:00 +0200
+date: 2019-07-06 05:00:00 +0200
 published: 2019-07-04 05:00:00 +0200
 comments: true
 categories: development
@@ -78,10 +78,16 @@ quarkus.camel.defer-init-phase = true
     When launched in "production mode" with the native executable the resources are not included by default in the
     binary. I'm externalizing the routes.xml file to the folder /camel so that it can be set
     and changed dynamically. This is actually quite interesting because we get to have a configurable native executable
-    that we can fine tune by switching the routes during runtime.
-    For some when I tried to change the property quarkus.camel.routes-uris during native runtime, it's new value doesn't
-    seem to be taken into account. So this file path is kind of like being hard coded right now..
+    that we can fine tune by switching the routes during run time.
+    For some when I tried to change the property quarkus.camel.routes-uris during native run time, it's new value doesn't
+    seem to be taken into account. So this file path is kind of like being hard coded right now.. 
 </p>
+<p><strong>Edit July 6,2019 : I discovered that there are different <a
+            href="https://quarkus.io/guides/extension-authors-guide" target="_blank">Configuration Phases</a> 
+            : BUILD_TIME, BUILD_AND_RUN_TIME_FIXED & RUN_TIME. 
+        It turns out this property is set to BUILD_AND_RUN_TIME_FIXED, so it is not dynamically read during native run time for the moment.
+        More details <a target="_blank" href="https://github.com/quarkusio/quarkus/issues/3116">here</a>.
+        </strong></p>
 <p>
     Quarkus.camel.defer-init-phase property is set to true because it seems that the camel context is created before all
     the CDI bean wiring and dependency injection happens.
@@ -181,7 +187,7 @@ import javax.inject.Inject;
 import org.apache.camel.ProducerTemplate;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 
-import io.quarkus.runtime.annotations.RegisterForReflection;
+import io.quarkus.run time.annotations.RegisterForReflection;
 import io.smallrye.reactive.messaging.annotations.Emitter;
 import io.smallrye.reactive.messaging.annotations.Stream;
 
@@ -222,7 +228,7 @@ import org.apache.camel.CamelContext;
 import org.apache.camel.ProducerTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import io.quarkus.camel.core.runtime.InitializedEvent;
+import io.quarkus.camel.core.run time.InitializedEvent;
 import io.smallrye.reactive.messaging.annotations.Emitter;
 import io.smallrye.reactive.messaging.annotations.Stream;
 
