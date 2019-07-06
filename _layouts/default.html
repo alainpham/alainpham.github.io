@@ -7,14 +7,16 @@
 
 	{% if page.id %}
 	<p>
-	{% for tag in page.tags %}
-		<a class="label label-default" href="/tags/#{{ tag | slugify }}">{{ tag }}</a>
-    {% endfor %}
+		<strong>{{ page.published | date: '%B %d, %Y' }}</strong> ( last updated : {{ page.date | date: '%B %d, %Y' }} )
+		<br>
+		{% for tag in page.tags %}
+			<a class="label label-default" href="/tags/#{{ tag | slugify }}">{{ tag }}</a>
+		{% endfor %}
     </p>
 		<p>
     	<a href="{{ page.github }}" class="btn btn-default">
 		    <i class="fa fa-github fa-2x"></i>  {{ page.github }}
-		  </a>
+			</a>
 	</p>
 	<hr>
 	<h1>Abstract</h1>
