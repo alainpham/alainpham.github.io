@@ -1,0 +1,33 @@
+# Change 'comments' to true for Disqus comments
+disqus:
+  comments: true
+  disqus_shortname: 'apham'
+
+# If you are not using Google Analytics, please change 'google-ID' to an empty string
+google-ID: 'UA-91332049-1'
+
+menu: 
+  - name: Featured Projects
+    submenu:
+      - name: MicroBam
+        link: /projects/microbam
+      - name: OurLegacy
+        link: /projects/ourlegacy
+  - name: Posts
+    link: /
+  - name: Tags
+    link: /tags
+  - name: About
+    link: /about
+  - name: Follow me
+    submenu:
+      - name: GitHub
+        icon: github
+        link: http://github.com/alainpham
+      - name: LinkedIn
+        icon: linkedin-square
+        link: http://www.linkedin.com/in/alainpham
+      - name: Twitter
+        icon: twitter
+        link: https://twitter.com/koint
+    

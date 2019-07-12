@@ -13,30 +13,32 @@
 			</div>
 			<div id="navbar-collapse-menu" class="collapse navbar-collapse">
 				<ul class="nav navbar-nav">
-					<li class="dropdown"><a class="dropdown-toggle"
-						data-toggle="dropdown" href="#">Featured Projects<span
-							class="caret"></span></a>
-						<ul class="dropdown-menu">
-							<li><a href="/projects/microbam">MicroBam</a></li>
-							<li><a href="/projects/ourlegacy">OurLegacy</a></li>
-						</ul></li>
-					<li><a href="/">Posts</a></li>
-<!-- 					<li><a href="/">Presentations</a></li>-->
-					<li><a href="/tags">Tags</a></li>
-					<li><a href="/about/">About</a></li>
-					<!-- <li><a href="/books/">Recommended books</a></li> -->
-					<li class="dropdown"><a class="dropdown-toggle"
-						data-toggle="dropdown" href="#">Follow me<span
-							class="caret"></span></a>
-						<ul class="dropdown-menu">
-							<li><a href="http://github.com/alainpham"> <i
-									class="fa fa-inverse fa-github fa-2x"></i> GitHub</a></li>
-							<li><a href="http://www.linkedin.com/in/alainpham"> <i
-									class="fa fa-inverse fa-linkedin-square fa-2x"></i> LinkedIn</a></li>
-							<li><a href="https://twitter.com/koint"> <i
-									class="fa fa-inverse fa-twitter fa-2x"></i>Twitter</a></li>
-						</ul></li>
 
+					{% for item in site.data.settings.menu %}
+						<!-- If has submenues -->
+						{% if item.submenu %}
+						<li class="dropdown">
+							<a class="dropdown-toggle"	data-toggle="dropdown" href="#">
+								{{item.name}}
+								<span class="caret"></span>
+							</a>
+							<ul class="dropdown-menu">
+								{% for subitem in item.submenu %}
+									<li>
+										<a href="{{subitem.link}}">
+											{% if subitem.icon %}
+											<i class="fa fa-inverse fa-{{subitem.icon}} fa-2x"></i>
+											{% endif %}
+											{{subitem.name}}
+										</a>
+									</li>
+								{% endfor %}
+								</ul>
+							</li>
+						{% else %}
+							<li><a href="{{item.link}}">{{item.name}}</a></li>
+						{% endif %}
+					{% endfor %}
 				</ul>
 			</div>
 		</div>

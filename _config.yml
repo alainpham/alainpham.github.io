@@ -21,19 +21,23 @@ description:
 baseurl: "" # the subpath of your site, e.g. /blog
 github_username:  alainpham
 
+# jekyll-paginate configuration
+paginate: 10
+
 # Build settings
 markdown: kramdown
 #theme: minima
-gems:
+plugins:
   - jekyll-feed
   - jekyll-sitemap
-  - jekyll-seo-tag
+  - jekyll-paginate
 exclude:
   - Gemfile
   - Gemfile.lock
 include: ["_pages"]
 permalink: /posts/:title/
 excerpt_separator: <!--more-->
-author: https://www.linkedin.com/in/alainpham
+author: http://www.linkedin.com/in/alainpham
 
 host: 0.0.0.0
+
