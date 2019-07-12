@@ -13,11 +13,13 @@
 			<a class="label label-default" href="/tags/#{{ tag | slugify }}">{{ tag }}</a>
 		{% endfor %}
     </p>
-		<p>
+	{%if page.github %}
+	<p>
     	<a href="{{ page.github }}" class="btn btn-default">
 		    <i class="fa fa-github fa-2x"></i>  {{ page.github }}
 			</a>
 	</p>
+	{% endif %}
 	<hr>
 	<h1>Abstract</h1>
 	{% endif %}

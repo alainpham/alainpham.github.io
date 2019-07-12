@@ -34,10 +34,12 @@ comments: true
 		{% for tag in post.tags %}
 		<a class="label label-default" href="/tags/#{{ tag | slugify }}">{{ tag }}</a>
 		{% endfor %}
-				
+		{% if post.noimage %}
+		{% else %}		
 		<img
 			alt="{{ post.title }}"
 			src="/assets/images/{{post.id}}/top.jpg" class="img-responsive">
+		{% endif %}
 		<p>{{ post.excerpt | strip_html}}</p>
 		<a href="{{ post.url }}">Read more...</a>
 

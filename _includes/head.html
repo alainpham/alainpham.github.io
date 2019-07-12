@@ -19,9 +19,9 @@
 	  <meta name="twitter:description" content="{{page.description}}">
 
   {% else %}
-	  <meta name="description" content="{{page.excerpt | strip_html}}" />
-	  <meta property="og:description" content="{{page.excerpt | strip_html}}" />
-	  <meta name="twitter:description" content="{{page.excerpt | strip_html}}">
+	  <meta name="description" content="{{page.excerpt | strip_html | strip}}" />
+	  <meta property="og:description" content="{{page.excerpt | strip_html| strip}}" />
+	  <meta name="twitter:description" content="{{page.excerpt | strip_html| strip}}">
   {% endif %}
   <link rel="canonical" href="{{site.url}}{{page.url}}" />
   <meta property="og:url" content="{{site.url}}{{page.url}}" />
