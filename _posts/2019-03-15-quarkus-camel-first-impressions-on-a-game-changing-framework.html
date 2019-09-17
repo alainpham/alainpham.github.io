@@ -1,7 +1,7 @@
 ---
 layout: default
 title: "Quarkus Camel, First Impressions on a Game Changing Framework"
-date: 2019-07-04 05:00:00 +0200
+date: 2019-09-17 05:00:00 +0200
 published: 2019-03-15 05:00:00 +0200
 comments: true
 categories: development
@@ -238,9 +238,9 @@ Listening for transport dt_socket at address: 5005
 
 <p>
     We should bare in mind that here we are using the OpenJDK HotSpot and are not yet compiling our project to a native executable.
-    The results are already pretty remarkable as I could observe a boot time of 60.2 milliseconds.
+    The results are already pretty remarkable as I could observe a boot time of 602 milliseconds.
 </p>
-
+<p>(Edit Sept 17, 2017, prior to this date all my time conversions from seconds to milliseconds have been wrong. Thank you Faris for pointing it out :) )</p>
 <h3>
     Compile to native executable and run
 </h3>
@@ -273,17 +273,20 @@ mvn package -Pnative
 {% endhighlight %}
 
 <p>
-    We can observe here that the boot time is enhanced by a significant order of magnitude which is just a fraction of a millisecond. 
-    To be precise 0.4 milliseconds. This is simply an incredible result.
+    We can observe here that the boot time is enhanced by a significant order of magnitude which is 4 milliseconds.
 </p>
+
+<p>(Edit Sept 17, 2017, prior to this date all my time conversions from seconds to milliseconds have been wrong.)</p>
+
 
 <h2>Enhanced Developer Experience</h2>
 <p>
     Now the good surprises don't end there. Since the boot times are so good, it also solve a big challenge for development workflow. 
     In fact, Quarkus also implements a livereload mechanism to reflect the changes performed on the code instantaneously.
     Try to change some of the code in the project, hit Ctrl+s and we can observe how fast the service reloads to take the changes into account.
-    This is a big leap for developer productivity. As we can see here it took only 38.6 milliseconds to reload.
+    This is a big leap for developer productivity. As we can see here it took only 386 milliseconds to reload.
 </p>
+<p>(Edit Sept 17, 2017, prior to this date all my time conversions from seconds to milliseconds have been wrong.)</p>
 {% highlight shell %}
 2019-03-18 09:59:58,988 INFO  [io.qua.dev] (XNIO-1 task-1) Changes source files detected, recompiling [/home/workdrive/TAZONE/WORKSPACES/ws-quarkus/quarkus-camel-first-impressions/src/main/java/techlab/GreetingResource.java]
 2019-03-18 09:59:59,274 INFO  [io.quarkus] (XNIO-1 task-1) Quarkus stopped in 0.001s
@@ -389,7 +392,8 @@ mvn package -Pnative
 2019-03-18 11:05:58,835 INFO  [route1] (Camel (camel-1) thread #0 - timer://testTimer) test
 {% endhighlight %}
 
-<p>We can see that the boot time is a fraction of a millisecond, 0.7 milliseconds which is absolutely amazing!</p>
+<p>We can see that the boot time is of 7 milliseconds!</p>
+<p>(Edit Sept 17, 2017, prior to this date all my time conversions from seconds to milliseconds have been wrong.)</p>
 
 <h2>
     In summary, why is Quarkus so amazing ?
