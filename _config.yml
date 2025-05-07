@@ -19,8 +19,9 @@ description:
   just play for life.
 AI isn't the answer. it's a question we grow alongside.
 one tool, one idea, one human at a time.
-baseurl: "https://pius.gitgub.io"
-github_username:  alainpham
+url : "https://pius.gitgub.io"
+baseurl: 
+github_username:  pius
 # jekyll-paginate configuration
 paginate: 10
 
